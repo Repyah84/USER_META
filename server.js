@@ -33,6 +33,7 @@ const initUserPars = async () => {
     const meta = findUserMeta(userMetaResponse);
 
     if (meta !== null) {
+      console.log("GET_USER_META", meta);
       usersMeta.push(meta);
     }
   }
