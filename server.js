@@ -1,5 +1,3 @@
-import express from "express";
-import cors from "cors";
 import path from "path";
 
 import { fileURLToPath } from "url";
@@ -83,13 +81,5 @@ const users = async (next) => {
     await users(usersResponse.success.next);
   }
 };
-
-const app = express();
-
-app.use(cors());
-
-app.listen(1000, () => {
-  console.log("Server Works !!! At port 1000");
-});
 
 initUserPars();
