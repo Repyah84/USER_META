@@ -6,12 +6,12 @@
  *      users: { handle: string} []
  *      next: string
  *    }
- * }>}
+ * }> | null}
  */
 export const getUsers = async (next) => {
   try {
     const response = await fetch(
-      `https://social-prod.kiwi.manyvids.com/users/94aace8d-a2bf-550f-9946-b1b1abd33e83/followers?userType=MEMBER&next=${next}`,
+      `https://social-prod.kiwi.manyvids.com/users/2f7cab18-18a4-5b35-91b4-ee023862d90e/followers?userType=MEMBER&next=${next}`,
       {
         headers: {
           accept: "*/*",
@@ -38,9 +38,11 @@ export const getUsers = async (next) => {
       }
     );
 
-    const data = await response.json();
+    if (response.ok) {
+      return await response.json();
+    }
 
-    return data;
+    return null;
   } catch (error) {
     console.log(error);
   }

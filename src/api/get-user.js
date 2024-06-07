@@ -1,7 +1,7 @@
 /**
  *
  * @param {string} userName
- * @returns {Promise<string>}
+ * @returns {Promise<string | null>}
  */
 export const getUser = async (userName) => {
   try {
@@ -32,9 +32,13 @@ export const getUser = async (userName) => {
       }
     );
 
-    const data = await response.text();
+    console.log("getUser_response", response.ok);
 
-    return data;
+    if (response.ok) {
+      return await response.text();
+    }
+
+    return null;
   } catch (error) {
     console.log(error);
   }

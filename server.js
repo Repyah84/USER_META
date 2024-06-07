@@ -12,7 +12,7 @@ import { formatMilliseconds } from "./src/utils/time.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MAX_LENGTH = 50;
+const MAX_LENGTH = 40000;
 
 const usersHandles = [];
 const usersMeta = [];
@@ -30,11 +30,15 @@ const initUserPars = async () => {
   for (const userHandle of usersHandles) {
     const userMetaResponse = await getUser(userHandle);
 
-    const meta = findUserMeta(userMetaResponse);
+    if (userMetaResponse !== null) {
+      const meta = findUserMeta(userMetaResponse);
 
-    if (meta !== null) {
-      console.log("GET_USER_META", meta);
-      usersMeta.push(meta);
+      if (meta !== null) {
+        console.log("GET_USER_META", meta);
+        usersMeta.push(meta);
+      } else {
+        console.log("GET_USER_META_DISABLE", userHandle);
+      }
     }
   }
 
@@ -44,12 +48,17 @@ const initUserPars = async () => {
   console.log("usersMeta", usersMeta.length);
   console.log("SPEND_TIME", formatMilliseconds(end - start));
 
+  const info = {
+    all: usersHandles.length,
+    active: usersMeta.length,
+    time: formatMilliseconds(end - start),
+  };
+
   save(
-    `${JSON.stringify(usersMeta)}Time:${formatMilliseconds(end - start)}`,
+    `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "users.txt")
   );
 };
-
 /**
  *
  * @param {string | undefined} next
@@ -59,9 +68,10 @@ const users = async (next) => {
 
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {
-      console.log(user.handle);
-
-      usersHandles.push(user.handle);
+      if (user.handle) {
+        console.log("USER_HANDLE", user.handle);
+        usersHandles.push(user.handle);
+      }
     });
   }
 
