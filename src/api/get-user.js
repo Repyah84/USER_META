@@ -41,5 +41,6 @@ export const getUser = async (userName) => {
     return null;
   } catch (error) {
     console.log(error);
+    return null;
   }
 };
