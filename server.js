@@ -10,13 +10,38 @@ import { formatMilliseconds } from "./src/utils/time.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MAX_LENGTH = 40000;
+const MAX_LENGTH = Infinity;
 
 const usersHandles = [];
 const usersMeta = [];
 
 let start = 0;
 let end = 0;
+
+/**
+ *
+ * @param {string | undefined} next
+ */
+const users = async (next) => {
+  const usersResponse = await getUsers(next);
+
+  if (usersResponse?.success?.users) {
+    usersResponse.success.users.forEach((user) => {
+      if (user.handle) {
+        console.log("USER_HANDLE", user.handle);
+        usersHandles.push(user.handle);
+      }
+    });
+  }
+
+  if (usersHandles.length >= MAX_LENGTH) {
+    return;
+  }
+
+  if (usersResponse?.success?.next) {
+    await users(usersResponse.success.next);
+  }
+};
 
 const initUserPars = async () => {
   start = Date.now();
@@ -56,30 +81,6 @@ const initUserPars = async () => {
     `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "users.txt")
   );
-};
-/**
- *
- * @param {string | undefined} next
- */
-const users = async (next) => {
-  const usersResponse = await getUsers(next);
-
-  if (usersResponse?.success?.users) {
-    usersResponse.success.users.forEach((user) => {
-      if (user.handle) {
-        console.log("USER_HANDLE", user.handle);
-        usersHandles.push(user.handle);
-      }
-    });
-  }
-
-  if (usersHandles.length >= MAX_LENGTH) {
-    return;
-  }
-
-  if (usersResponse?.success?.next) {
-    await users(usersResponse.success.next);
-  }
 };
 
 initUserPars();
