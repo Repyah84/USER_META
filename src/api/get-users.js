@@ -1,6 +1,7 @@
 /**
  *
- * @param {string} next
+ * @param {string | undefined} next
+ * @param {string} modalId
  * @returns {Promise<{
  *    success: {
  *      users: { handle: string} []
@@ -8,10 +9,10 @@
  *    }
  * }> | null}
  */
-export const getUsers = async (next) => {
+export const getUsers = async (modalId, next) => {
   try {
     const response = await fetch(
-      `https://social-prod.kiwi.manyvids.com/users/2f7cab18-18a4-5b35-91b4-ee023862d90e/followers?userType=MEMBER&next=${next}`,
+      `https://social-prod.kiwi.manyvids.com/users/${modalId}/followers?userType=MEMBER&next=${next}`,
       {
         headers: {
           accept: "*/*",
