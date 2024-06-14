@@ -1,5 +1,6 @@
+import fetch, { AbortError } from "node-fetch";
+
 /**
- *
  * @param {string | undefined} next
  * @param {string} modalId
  * @returns {Promise<{
@@ -10,6 +11,14 @@
  * }> | null}
  */
 export const getUsers = async (modalId, next) => {
+  const AbortController = globalThis.AbortController;
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 5000);
+
   try {
     const response = await fetch(
       `https://social-prod.kiwi.manyvids.com/users/${modalId}/followers?userType=MEMBER&next=${next}`,
@@ -36,16 +45,20 @@ export const getUsers = async (modalId, next) => {
         },
         body: null,
         method: "GET",
+        signal: controller.signal,
       }
     );
 
-    if (response.ok) {
-      return await response.json();
+    return await response.json();
+  } catch (error) {
+    if (error instanceof AbortError) {
+      console.log("request was aborted");
+    } else {
+      console.log(error);
     }
 
     return null;
-  } catch (error) {
-    console.log(error);
-    return null;
+  } finally {
+    clearTimeout(timeout);
   }
 };

@@ -1,9 +1,23 @@
+import fetch, { AbortError } from "node-fetch";
+import { HttpsProxyAgent } from "https-proxy-agent";
+
 /**
  *
  * @param {string} userName
+ * @param {string} proxyData
  * @returns {Promise<string | null>}
  */
-export const getUser = async (userName) => {
+export const getUser = async (userName, proxyData) => {
+  const agent = new HttpsProxyAgent(`http://${proxyData}`);
+
+  const AbortController = globalThis.AbortController;
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 7000);
+
   try {
     const response = await fetch(
       `https://www.manyvids.com/includes/redirect-profile.php?stagename=${userName}&tab=`,
@@ -29,18 +43,21 @@ export const getUser = async (userName) => {
         },
         body: null,
         method: "GET",
+        agent,
+        signal: controller.signal,
       }
     );
 
-    console.log("getUser_response", response.ok);
-
-    if (response.ok) {
-      return await response.text();
+    return await response.text();
+  } catch (error) {
+    if (error instanceof AbortError) {
+      console.log("request was aborted");
+    } else {
+      console.log(error);
     }
 
     return null;
-  } catch (error) {
-    console.log(error);
-    return null;
+  } finally {
+    clearTimeout(timeout);
   }
 };

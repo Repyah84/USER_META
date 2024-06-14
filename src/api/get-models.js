@@ -1,4 +1,6 @@
-const size = 70;
+import fetch from "node-fetch";
+
+import { SIZE } from "../const/size.js";
 
 /**
  *
@@ -12,9 +14,9 @@ const size = 70;
 export const getModels = async (page) => {
   try {
     const response = await fetch(
-      `https://www.manyvids.com/bff/search/creators/list?sort=top&contentPref=1%252C2%252C3&contentType=1&from=${
-        size * page
-      }&size=${size}`,
+      `https://www.manyvids.com/bff/search/creators/list?sort=followers&contentPref=1%252C2%252C3&contentType=1&from=${
+        SIZE * page
+      }&size=${SIZE}`,
       {
         headers: {
           accept: "*/*",
@@ -37,11 +39,7 @@ export const getModels = async (page) => {
       }
     );
 
-    if (response.ok) {
-      return await response.json();
-    }
-
-    return null;
+    return await response.json();
   } catch {
     console.log(error);
     return null;
