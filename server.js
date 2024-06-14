@@ -14,7 +14,7 @@ import { PROXY } from "./src/const/proxy.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MAX_LENGTH = 50;
+const MAX_LENGTH = Infinity;
 
 const modelsIds = new Set();
 const usersHandles = new Set();
@@ -60,9 +60,7 @@ const models = async (page) => {
     }
   }
 
-  // !modelsResponse || modelsResponse.totalPages === page
-
-  if (2 === page) {
+  if (!modelsResponse || modelsResponse.totalPages === page) {
     console.log("MODELS_ID_READY", modelsIds.size);
     return;
   }
