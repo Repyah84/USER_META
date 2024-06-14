@@ -14,7 +14,7 @@ import { PROXY } from "./src/const/proxy.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MAX_LENGTH = Infinity;
+const MAX_LENGTH = 50;
 
 const modelsIds = new Set();
 const usersHandles = new Set();
@@ -60,7 +60,9 @@ const models = async (page) => {
     }
   }
 
-  if (!modelsResponse || modelsResponse.totalPages === page) {
+  // !modelsResponse || modelsResponse.totalPages === page
+
+  if (2 === page) {
     console.log("MODELS_ID_READY", modelsIds.size);
     return;
   }
@@ -101,14 +103,14 @@ const initUserPars = async () => {
   let start = 0;
   let end = 0;
 
-  await initProxy(PROXY);
+  // await initProxy(PROXY);
 
-  save(
-    `proxyMeta${JSON.stringify(proxyMeta)}length:${
-      proxyMeta.length
-    }/proxyRotten${JSON.stringify(proxyRotten)}length:${proxyRotten.length}`,
-    path.join(__dirname, "output/proxy.txt")
-  );
+  // save(
+  //   `proxyMeta${JSON.stringify(proxyMeta)}length:${
+  //     proxyMeta.length
+  //   }/proxyRotten${JSON.stringify(proxyRotten)}length:${proxyRotten.length}`,
+  //   path.join(__dirname, "output/proxy.txt")
+  // );
 
   start = Date.now();
 

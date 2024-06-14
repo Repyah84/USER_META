@@ -1,6 +1,5 @@
 # Node
 /node_modules
-/output
 
 # Files
-/users.txt
+/output/*.txt
