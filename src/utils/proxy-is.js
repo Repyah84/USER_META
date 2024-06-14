@@ -25,7 +25,7 @@ export const proxyIs = async (proxy) => {
     });
 
     return true;
-  } catch {
+  } catch (error) {
     if (error instanceof AbortError) {
       console.log("request was aborted");
     }
