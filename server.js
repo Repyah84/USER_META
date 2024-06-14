@@ -10,13 +10,11 @@ import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/utils/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
-import { getRandomElement } from "./src/utils/get-random-element.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MAX_LENGTH = 20;
-const MIN_PROXY = 50;
+const MAX_LENGTH = Infinity;
 
 const modelsIds = new Set();
 const usersHandles = new Set();
@@ -62,23 +60,12 @@ const models = async (page) => {
     }
   }
 
-  const limit = !modelsResponse || modelsResponse.totalPages === page;
-
-  if (2 === page) {
+  if (!modelsResponse || modelsResponse.totalPages === page) {
     console.log("MODELS_ID_READY", modelsIds.size);
     return;
   }
 
   page++;
-
-  console.log(
-    "PAGE",
-    page,
-    "TOTAL",
-    modelsResponse.totalPages,
-    "CURRENT",
-    modelsIds.size
-  );
 
   await models(page);
 };
@@ -123,15 +110,11 @@ const initUserPars = async () => {
     path.join(__dirname, "output/proxy.txt")
   );
 
-  if (proxyMeta.length < MIN_PROXY) {
-    throw new Error(`proxy ${proxyMeta.length} not enough(list ${MIN_PROXY})`);
-  }
-
   start = Date.now();
 
   await models(0);
 
-  const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 100);
+  const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 300);
 
   for (const modelsId of chunksModelsId) {
     await new Promise((resolve) => {
@@ -164,7 +147,7 @@ const initUserPars = async () => {
     path.join(__dirname, "output/meta.txt")
   );
 
-  console.log("GET_USERS_META", proxyMeta.length);
+  return;
 
   const chunks = chunkArray(
     Array.from(usersHandles.values()),
@@ -181,8 +164,6 @@ const initUserPars = async () => {
 
         meatIndex++;
 
-        console.log(pr);
-
         getUser(value, pr).then((userMetaResponse) => {
           if (userMetaResponse) {
             const meta = findUserMeta(userMetaResponse);
@@ -191,16 +172,12 @@ const initUserPars = async () => {
               console.log("USER META_ADD", meta);
 
               usersMeta.push(meta);
-            } else {
-              console.log("USER META_DISABLED");
             }
           }
 
           index++;
 
           if (index === chunk.length) {
-            console.log("RESOLVE");
-
             resolve();
           }
         });
@@ -208,26 +185,7 @@ const initUserPars = async () => {
     });
   }
 
-  // for (const userHandle of Array.from(usersHandles.values())) {
-  //   const userMetaResponse = await getUser(userHandle);
-
-  //   if (userMetaResponse) {
-  //     const meta = findUserMeta(userMetaResponse);
-
-  //     if (meta !== null) {
-  //       console.log("GET_USER_META", meta);
-  //       usersMeta.push(meta);
-  //     } else {
-  //       console.log("GET_USER_META_DISABLE", userHandle);
-  //     }
-  //   }
-  // }
-
   end = Date.now();
-
-  console.log("usersHandles", usersHandles.size);
-  console.log("usersMeta", usersMeta.length);
-  console.log("SPEND_TIME", formatMilliseconds(end - start));
 
   const info = {
     all: usersHandles.size,
