@@ -101,14 +101,14 @@ const initUserPars = async () => {
   let start = 0;
   let end = 0;
 
-  // await initProxy(PROXY);
+  await initProxy(PROXY);
 
-  // save(
-  //   `proxyMeta${JSON.stringify(proxyMeta)}length:${
-  //     proxyMeta.length
-  //   }/proxyRotten${JSON.stringify(proxyRotten)}length:${proxyRotten.length}`,
-  //   path.join(__dirname, "output/proxy.txt")
-  // );
+  save(
+    `proxyMeta${JSON.stringify(proxyMeta)}length:${
+      proxyMeta.length
+    }/proxyRotten${JSON.stringify(proxyRotten)}length:${proxyRotten.length}`,
+    path.join(__dirname, "output/proxy.txt")
+  );
 
   start = Date.now();
 
@@ -146,8 +146,6 @@ const initUserPars = async () => {
     )}ParsInfo:${JSON.stringify(handlesInfo)}`,
     path.join(__dirname, "output/meta.txt")
   );
-
-  return;
 
   const chunks = chunkArray(
     Array.from(usersHandles.values()),
