@@ -2,4 +2,4 @@
 /node_modules
 
 # Files
-/output/*.txt
+# /output/*.txt
