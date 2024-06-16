@@ -22,7 +22,7 @@ import { userIsVip } from "./src/utils/user-is-vip.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEST = true;
+const TEST = false;
 
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
@@ -221,7 +221,7 @@ const usersPars = async () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  await addUsersToDataBase("NEW_LIST_FROM_PARS_TEST", usersMeta);
+  await addUsersToDataBase("VIP_USERS_PARSER", usersMeta);
 
   console.log("Data is saved to data base");
 };
