@@ -190,7 +190,7 @@ const usersPars = async () => {
             if (userMetaResponse) {
               const meta = findUserMeta(userMetaResponse);
 
-              if (meta !== null) {
+              if (meta !== null && userIsVip(userMetaResponse)) {
                 console.log("USER META_ADD", meta);
 
                 usersMeta.push(meta);
