@@ -35,6 +35,10 @@ export const addList = async (listName, accessToken, refreshToken) => {
       refreshToken
     );
 
+    if (response === null) {
+      return null;
+    }
+
     // @ts-ignore
     return await response.json();
   } catch {

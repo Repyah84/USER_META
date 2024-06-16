@@ -30,6 +30,10 @@ export const addUsers = async (body, accessToken, refreshToken) => {
       refreshToken
     );
 
+    if (response === null) {
+      return null;
+    }
+
     // @ts-ignore
     return await response.json();
   } catch {
