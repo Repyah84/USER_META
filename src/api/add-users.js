@@ -6,7 +6,7 @@
 import fetch from "node-fetch";
 
 import { API } from "../const/api.js";
-import { request } from "../utils/request.js";
+import { request } from "../modules/request.js";
 
 /**
  * @param {{users: User[]}} body
@@ -16,7 +16,7 @@ import { request } from "../utils/request.js";
  */
 export const addUsers = async (body, accessToken, refreshToken) => {
   try {
-    const response = request(
+    const response = await request(
       (accessToken) =>
         fetch(`${API}/add_users`, {
           method: "POST",
@@ -34,9 +34,10 @@ export const addUsers = async (body, accessToken, refreshToken) => {
       return null;
     }
 
-    // @ts-ignore
-    return await response.json();
-  } catch {
+    return await /** @type {Promise<boolean>} */ (response.json());
+  } catch (error) {
+    console.log(error);
+
     return null;
   }
 };

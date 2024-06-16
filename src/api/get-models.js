@@ -7,12 +7,13 @@ import fetch from "node-fetch";
 import { SIZE } from "../const/size.js";
 
 /**
- * @param {number} page
- * @returns {Promise<{
+ * @typedef {{
  *      creators: { guid: string }[],
  *      currentPage: number
  *      totalPages: number
- * } | null>}
+ * }} ResponseData
+ * @param {number} page
+ * @returns {Promise< ResponseData| null>}
  */
 export const getModels = async (page) => {
   try {
@@ -42,8 +43,7 @@ export const getModels = async (page) => {
       }
     );
 
-    // @ts-ignore
-    return await response.json();
+    return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {
     console.log(error);
 

@@ -3,17 +3,21 @@
 "use strict";
 
 import path from "path";
-
 import { fileURLToPath } from "url";
+
+import { addUsersToDataBase } from "./src/modules/add-users-to-data-base.js";
+
 import { getUsers } from "./src/api/get-users.js";
 import { getUser } from "./src/api/get-user.js";
 import { findUserMeta } from "./src/utils/find-user-meta.js";
-import { save } from "./src/utils/save.js";
+import { save } from "./src/modules/save.js";
 import { formatMilliseconds } from "./src/utils/time.js";
 import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
-import { proxyIs } from "./src/utils/proxy-is.js";
+import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
+
+import { userIsVip } from "./src/utils/user-is-vip.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -110,12 +114,6 @@ const users = async (modalId, next) => {
     await users(modalId, usersResponse.success.next);
   }
 };
-
-/**
- * @param {string[]} users
- * @returns {Promise<void>}
- */
-const addUsers = async (users) => {};
 
 /**
  * @returns {Promise<void>}
@@ -222,6 +220,10 @@ const usersPars = async () => {
     `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
+
+  await addUsersToDataBase("NEW_LIST_FROM_PARS_TEST", usersMeta);
+
+  console.log("Data is saved to data base");
 };
 
 usersPars();

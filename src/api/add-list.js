@@ -6,7 +6,7 @@
 import fetch from "node-fetch";
 
 import { API } from "../const/api.js";
-import { request } from "../utils/request.js";
+import { request } from "../modules/request.js";
 
 /**
  * @param {string} listName
@@ -39,9 +39,10 @@ export const addList = async (listName, accessToken, refreshToken) => {
       return null;
     }
 
-    // @ts-ignore
-    return await response.json();
-  } catch {
+    return await /** @type {Promise<List>} */ (response.json());
+  } catch (error) {
+    console.log(error);
+
     return null;
   }
 };

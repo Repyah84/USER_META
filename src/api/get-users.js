@@ -5,14 +5,15 @@
 import fetch, { AbortError } from "node-fetch";
 
 /**
- * @param {string | undefined} next
- * @param {string} modalId
- * @returns {Promise<{
+ * @typedef {{
  *    success: {
  *      users: { handle: string} []
  *      next: string
  *    }
- * } | null> }
+ * }} ResponseData
+ * @param {string | undefined} next
+ * @param {string} modalId
+ * @returns {Promise< ResponseData| null> }
  */
 export const getUsers = async (modalId, next) => {
   const AbortController = globalThis.AbortController;
@@ -53,8 +54,7 @@ export const getUsers = async (modalId, next) => {
       }
     );
 
-    // @ts-ignore
-    return await response.json();
+    return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {
     if (error instanceof AbortError) {
       console.log("request was aborted");

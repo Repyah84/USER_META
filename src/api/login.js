@@ -13,7 +13,7 @@ import fetch from "node-fetch";
  */
 export const login = async (body) => {
   try {
-    const response = await fetch(`${API}/operator/login`, {
+    const response = await fetch(`${API}/admin/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -21,9 +21,10 @@ export const login = async (body) => {
       body: JSON.stringify(body),
     });
 
-    // @ts-ignore
-    return await response.json();
-  } catch {
+    return await /** @type {Promise<AuthResponse>} */ (response.json());
+  } catch (error) {
+    console.log(error);
+
     return null;
   }
 };

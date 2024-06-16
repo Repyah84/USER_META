@@ -1,17 +1,16 @@
 // @ts-check
 
-"use strict";
-
 import fetch from "node-fetch";
 
 import { API } from "../const/api.js";
-import { request } from "../utils/request.js";
+import { request } from "../modules/request.js";
 
 /**
- * @param {{
+ * @typedef {{
  *      listId: string,
  *      userIds: string[]
- * }} body
+ * }} RequestData
+ * @param {RequestData} body
  * @param {string} accessToken
  * @param {string} refreshToken
  * @returns {Promise<boolean | null>}
@@ -36,9 +35,10 @@ export const addUsersToList = async (body, accessToken, refreshToken) => {
       return null;
     }
 
-    // @ts-ignore
-    return await response.json();
-  } catch {
+    return await /** @type {Promise<boolean>} */ (response.json());
+  } catch (error) {
+    console.log(error);
+
     return null;
   }
 };

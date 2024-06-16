@@ -1,5 +1,6 @@
 // @ts-check
 /// <reference path="../types/auth.type.js" />
+
 "use strict";
 
 import { API } from "../const/api.js";
@@ -28,9 +29,10 @@ export const refresh = async (refreshToken) => {
       return null;
     }
 
-    // @ts-ignore
-    return await response.json();
-  } catch {
+    return await /** @type {Promise<AuthResponse>} */ (response.json());
+  } catch (error) {
+    console.log(error);
+
     return null;
   }
 };
