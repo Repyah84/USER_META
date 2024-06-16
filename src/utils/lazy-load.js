@@ -1,9 +1,13 @@
+// @ts-check
+
+"use strict";
+
 /**
- *
- * @param {any[]} list
- * @param {(value: any) => Promise<any>} load
- * @param {(value: any) => void} action
- * @returns
+ * @template T
+ * @param {T[]} list
+ * @param {(value: T) => Promise<T>} load
+ * @param {(value: T) => void} action
+ * @returns {Promise<void>}
  */
 export const lazyLoad = (list, load, action) =>
   new Promise((resolve) => {

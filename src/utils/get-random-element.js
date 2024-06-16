@@ -1,11 +1,20 @@
+// @ts-check
+
+"use strict";
+
 /**
- *
+ * @template T
  * @param {T[]} elements
- * @returns {fn() => T}
+ * @returns {() => T}
  */
 export const getRandomElement = (elements) => {
   const mutate = [...elements];
 
+  /**
+   *
+   * @param {number} number
+   * @returns
+   */
   const getRandomIndex = (number) => Math.floor(Math.random() * (number + 1));
 
   const randomElement = () => {
@@ -13,11 +22,7 @@ export const getRandomElement = (elements) => {
 
     const element = mutate[index];
 
-    console.log("ELEMENT___", element);
-
     mutate.splice(index, 1);
-
-    console.log("PROXY___", mutate.length);
 
     return element;
   };

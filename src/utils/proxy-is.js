@@ -1,8 +1,11 @@
+// @ts-check
+
+"use strict";
+
 import fetch, { AbortError } from "node-fetch";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 /**
- *
  * @param {string} proxy
  * @returns {Promise<boolean>}
  */

@@ -1,7 +1,10 @@
+// @ts-check
+
+"use strict";
+
 import fs from "fs";
 
 /**
- *
  * @param {string} data
  * @param {string} path
  */

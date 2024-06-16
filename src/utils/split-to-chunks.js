@@ -1,5 +1,9 @@
+// @ts-check
+
+"use strict";
+
 /**
- *
+ * @template T
  * @param {T[]} array
  * @param {number} chunkSize
  * @returns {T[][]}

@@ -1,3 +1,7 @@
+// @ts-check
+
+"use strict";
+
 import path from "path";
 
 import { fileURLToPath } from "url";
@@ -16,16 +20,23 @@ const __dirname = path.dirname(__filename);
 
 const MAX_LENGTH = Infinity;
 
+/** @type {Set<string>} */
 const modelsIds = new Set();
+
+/** @type {Set<string>} */
 const usersHandles = new Set();
+
+/** @type {Array<string>} */
 const usersMeta = [];
 
+/** @type {Array<string>} */
 const proxyMeta = [];
+
+/** @type {Array<string>} */
 const proxyRotten = [];
 
 /**
- *
- * @param {string[]} proxyData
+ * @param {string[]} proxyList
  * @returns {Promise<void>}
  */
 const initProxy = async (proxyList) => {
@@ -43,7 +54,6 @@ const initProxy = async (proxyList) => {
 };
 
 /**
- *
  * @param {number} page
  * @returns
  */
@@ -71,7 +81,6 @@ const models = async (page) => {
 };
 
 /**
- *
  * @param {string} modalId
  * @param {string | undefined} next
  */
@@ -97,7 +106,13 @@ const users = async (modalId, next) => {
   }
 };
 
-const initUserPars = async () => {
+/**
+ * @param {string[]} users
+ * @returns {Promise<void>}
+ */
+const addUsers = async (users) => {};
+
+const usersPars = async () => {
   let start = 0;
   let end = 0;
 
@@ -117,19 +132,21 @@ const initUserPars = async () => {
   const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 300);
 
   for (const modelsId of chunksModelsId) {
-    await new Promise((resolve) => {
-      let index = 0;
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        let index = 0;
 
-      for (const modelId of modelsId) {
-        users(modelId).then(() => {
-          index++;
+        for (const modelId of modelsId) {
+          users(modelId, undefined).then(() => {
+            index++;
 
-          if (index === modelsId.length) {
-            resolve();
-          }
-        });
-      }
-    });
+            if (index === modelsId.length) {
+              resolve();
+            }
+          });
+        }
+      })
+    );
   }
 
   end = Date.now();
@@ -153,34 +170,36 @@ const initUserPars = async () => {
   );
 
   for (const chunk of chunks) {
-    await new Promise((resolve) => {
-      let index = 0;
-      let meatIndex = 0;
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        let index = 0;
+        let meatIndex = 0;
 
-      for (const value of chunk) {
-        const pr = proxyMeta[meatIndex];
+        for (const value of chunk) {
+          const pr = proxyMeta[meatIndex];
 
-        meatIndex++;
+          meatIndex++;
 
-        getUser(value, pr).then((userMetaResponse) => {
-          if (userMetaResponse) {
-            const meta = findUserMeta(userMetaResponse);
+          getUser(value, pr).then((userMetaResponse) => {
+            if (userMetaResponse) {
+              const meta = findUserMeta(userMetaResponse);
 
-            if (meta !== null) {
-              console.log("USER META_ADD", meta);
+              if (meta !== null) {
+                console.log("USER META_ADD", meta);
 
-              usersMeta.push(meta);
+                usersMeta.push(meta);
+              }
             }
-          }
 
-          index++;
+            index++;
 
-          if (index === chunk.length) {
-            resolve();
-          }
-        });
-      }
-    });
+            if (index === chunk.length) {
+              resolve();
+            }
+          });
+        }
+      })
+    );
   }
 
   end = Date.now();
@@ -197,4 +216,4 @@ const initUserPars = async () => {
   );
 };
 
-initUserPars();
+usersPars();

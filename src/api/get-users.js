@@ -1,3 +1,7 @@
+// @ts-check
+
+"use strict";
+
 import fetch, { AbortError } from "node-fetch";
 
 /**
@@ -8,7 +12,7 @@ import fetch, { AbortError } from "node-fetch";
  *      users: { handle: string} []
  *      next: string
  *    }
- * }> | null}
+ * } | null> }
  */
 export const getUsers = async (modalId, next) => {
   const AbortController = globalThis.AbortController;
@@ -49,6 +53,7 @@ export const getUsers = async (modalId, next) => {
       }
     );
 
+    // @ts-ignore
     return await response.json();
   } catch (error) {
     if (error instanceof AbortError) {

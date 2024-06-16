@@ -1,3 +1,5 @@
+// @ts-check
+
 export const PROXY = [
   "RK3UXW1K:LH5dTDgG@45.131.44.240:63822",
   "RK3UXW1K:LH5dTDgG@85.202.167.243:62616",

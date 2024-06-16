@@ -1,9 +1,12 @@
+// @ts-check
+
+"use strict";
+
 import fetch from "node-fetch";
 
 import { SIZE } from "../const/size.js";
 
 /**
- *
  * @param {number} page
  * @returns {Promise<{
  *      creators: { guid: string }[],
@@ -39,9 +42,11 @@ export const getModels = async (page) => {
       }
     );
 
+    // @ts-ignore
     return await response.json();
-  } catch {
+  } catch (error) {
     console.log(error);
+
     return null;
   }
 };

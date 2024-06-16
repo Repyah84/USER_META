@@ -1,3 +1,12 @@
+// @ts-check
+
+"use strict";
+
+/**
+ * @template T
+ * @param {T[]} list
+ * @returns {T[]}
+ */
 export const shuffleArray = (list) => {
   const shuffledArray = [...list];
 

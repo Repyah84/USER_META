@@ -17,5 +17,8 @@
     "https-proxy-agent": "^7.0.4",
     "node-fetch": "^3.3.2",
     "proxy-check": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.11"
   }
 }

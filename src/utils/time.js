@@ -1,5 +1,8 @@
+// @ts-check
+
+"use strict";
+
 /**
- *
  * @param {number} ms
  * @returns
  */
