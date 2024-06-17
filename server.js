@@ -135,7 +135,7 @@ const usersPars = async () => {
 
   await models(0);
 
-  const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 300);
+  const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 100);
 
   for (const modelsId of chunksModelsId) {
     await /** @type {Promise<void>} */ (
@@ -169,6 +169,8 @@ const usersPars = async () => {
     )}ParsInfo:${JSON.stringify(handlesInfo)}`,
     path.join(__dirname, "output/meta.txt")
   );
+
+  return;
 
   const chunks = chunkArray(
     Array.from(usersHandles.values()),

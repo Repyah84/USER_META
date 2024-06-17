@@ -51,6 +51,10 @@ export const getUser = async (userName, proxyData) => {
       }
     );
 
+    if (!response.ok) {
+      return null;
+    }
+
     return await response.text();
   } catch (error) {
     if (error instanceof AbortError) {
