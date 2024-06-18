@@ -21,7 +21,7 @@ export const proxyIs = async (proxy) => {
   }, 60000);
 
   try {
-    await fetch("https://www.google.com/", {
+    await fetch("https://www.manyvids.com/", {
       method: "GET",
       agent,
       signal: controller.signal,

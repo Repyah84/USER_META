@@ -26,6 +26,12 @@ const TEST = false;
 
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
+let workers = 0;
+let indexData = -1;
+
+let start = 0;
+let end = 0;
+
 /** @type {Set<string>} */
 const modelsIds = new Set();
 
@@ -76,7 +82,7 @@ const models = async (page) => {
     }
   }
 
-  const filter = TEST ? 2 : !modelsResponse || modelsResponse.totalPages;
+  const filter = TEST ? 1 : !modelsResponse || modelsResponse.totalPages;
 
   if (filter === page) {
     console.log("MODELS_ID_READY", modelsIds.size);
@@ -116,12 +122,77 @@ const users = async (modalId, next) => {
 };
 
 /**
+ * @param {number} index
+ * @param {string[]} usersHandlesList
+ * @returns
+ */
+const getUserMeta = (usersHandlesList, index) => usersHandlesList[index];
+
+/**
+ *
+ * @param {(value: string[], idex: number) => string} metaFn
+ * @param {string} proxy
+ * @param {string[]}usersHandlesList
+ * @param {() => void} finallyActionFn
+ */
+const worker = async (metaFn, proxy, usersHandlesList, finallyActionFn) => {
+  if (indexData === usersHandlesList.length - 1) {
+    workers--;
+
+    if (workers === 0) {
+      finallyActionFn();
+    }
+
+    return;
+  }
+
+  indexData++;
+
+  const userMeta = metaFn(usersHandlesList, indexData);
+
+  const userMetaResponse = await getUser(userMeta, proxy);
+
+  if (userMetaResponse) {
+    const meta = findUserMeta(userMetaResponse);
+
+    if (meta !== null) {
+      console.log("USER META_ADD", meta);
+
+      usersMeta.push(meta);
+    }
+  }
+
+  setTimeout(() => {
+    worker(metaFn, proxy, usersHandlesList, finallyActionFn);
+  }, 2000);
+};
+
+/**
+ * @returns
+ */
+const finallyAction = () => {
+  end = Date.now();
+
+  const info = {
+    all: usersHandles.size,
+    active: usersMeta.length,
+    time: formatMilliseconds(end - start),
+  };
+
+  save(
+    `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
+    path.join(__dirname, "output/users.txt")
+  );
+
+  addUsersToDataBase("All_USERS_PARSER", usersMeta).then(() => {
+    console.log("Data is saved to data base");
+  });
+};
+
+/**
  * @returns {Promise<void>}
  */
 const usersPars = async () => {
-  let start = 0;
-  let end = 0;
-
   await initProxy(PROXY);
 
   save(
@@ -143,7 +214,7 @@ const usersPars = async () => {
         let index = 0;
 
         for (const modelId of modelsId) {
-          users(modelId, undefined).then(() => {
+          users(modelId, undefined).finally(() => {
             index++;
 
             if (index === modelsId.length) {
@@ -170,62 +241,18 @@ const usersPars = async () => {
     path.join(__dirname, "output/meta.txt")
   );
 
-  return;
+  workers = proxyMeta.length;
 
-  const chunks = chunkArray(
-    Array.from(usersHandles.values()),
-    proxyMeta.length
-  );
+  for (let i = 0; i < proxyMeta.length; i++) {
+    const proxy = proxyMeta[i];
 
-  for (const chunk of chunks) {
-    await /** @type {Promise<void>} */ (
-      new Promise((resolve) => {
-        let index = 0;
-        let meatIndex = 0;
-
-        for (const value of chunk) {
-          const pr = proxyMeta[meatIndex];
-
-          meatIndex++;
-
-          getUser(value, pr).then((userMetaResponse) => {
-            if (userMetaResponse) {
-              const meta = findUserMeta(userMetaResponse);
-
-              if (meta !== null && userIsVip(userMetaResponse)) {
-                console.log("USER META_ADD", meta);
-
-                usersMeta.push(meta);
-              }
-            }
-
-            index++;
-
-            if (index === chunk.length) {
-              resolve();
-            }
-          });
-        }
-      })
+    worker(
+      getUserMeta,
+      proxy,
+      Array.from(usersHandles.values()),
+      finallyAction
     );
   }
-
-  end = Date.now();
-
-  const info = {
-    all: usersHandles.size,
-    active: usersMeta.length,
-    time: formatMilliseconds(end - start),
-  };
-
-  save(
-    `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
-    path.join(__dirname, "output/users.txt")
-  );
-
-  await addUsersToDataBase("VIP_USERS_PARSER", usersMeta);
-
-  console.log("Data is saved to data base");
 };
 
 usersPars();

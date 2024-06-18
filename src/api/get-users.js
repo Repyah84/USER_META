@@ -22,7 +22,7 @@ export const getUsers = async (modalId, next) => {
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 5000);
+  }, 10000);
 
   try {
     const response = await fetch(

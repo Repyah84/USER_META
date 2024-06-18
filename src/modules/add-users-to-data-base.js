@@ -51,7 +51,7 @@ export const addUsersToDataBase = async (listName, users) => {
               refresh_token
             );
           })
-          .then(() => {
+          .finally(() => {
             resolve();
           });
       })
