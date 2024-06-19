@@ -241,6 +241,8 @@ const usersPars = async () => {
     path.join(__dirname, "output/meta.txt")
   );
 
+  return;
+
   workers = proxyMeta.length;
 
   for (let i = 0; i < proxyMeta.length; i++) {
