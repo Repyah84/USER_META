@@ -136,35 +136,35 @@ const getUserMeta = (usersHandlesList, index) => usersHandlesList[index];
  * @param {() => void} finallyActionFn
  */
 const worker = async (metaFn, proxy, usersHandlesList, finallyActionFn) => {
-  if (indexData === usersHandlesList.length - 1) {
-    workers--;
+  do {
+    indexData++;
 
-    if (workers === 0) {
-      finallyActionFn();
-    }
+    const userMeta = metaFn(usersHandlesList, indexData);
 
-    return;
+    await new Promise((resolve) => {
+      getUser(userMeta, proxy)
+        .then((userMetaResponse) => {
+          if (userMetaResponse) {
+            const meta = findUserMeta(userMetaResponse);
+
+            if (meta !== null) {
+              console.log("USER META_ADD", meta);
+
+              usersMeta.push(meta);
+            }
+          }
+        })
+        .finally(() => {
+          setTimeout(resolve, 2000);
+        });
+    });
+  } while (indexData < usersHandlesList.length);
+
+  workers--;
+
+  if (workers === 0) {
+    finallyActionFn();
   }
-
-  indexData++;
-
-  const userMeta = metaFn(usersHandlesList, indexData);
-
-  const userMetaResponse = await getUser(userMeta, proxy);
-
-  if (userMetaResponse) {
-    const meta = findUserMeta(userMetaResponse);
-
-    if (meta !== null) {
-      console.log("USER META_ADD", meta);
-
-      usersMeta.push(meta);
-    }
-  }
-
-  setTimeout(() => {
-    worker(metaFn, proxy, usersHandlesList, finallyActionFn);
-  }, 2000);
 };
 
 /**
@@ -241,11 +241,9 @@ const usersPars = async () => {
     path.join(__dirname, "output/meta.txt")
   );
 
-  return;
-
   workers = proxyMeta.length;
 
-  for (let i = 0; i < proxyMeta.length; i++) {
+  for (let i = 0; i < workers; i++) {
     const proxy = proxyMeta[i];
 
     worker(
