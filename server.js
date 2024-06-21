@@ -19,6 +19,8 @@ import { PROXY } from "./src/const/proxy.js";
 
 import { userIsVip } from "./src/utils/user-is-vip.js";
 
+import { META } from "./src/const/test-data.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -143,7 +145,7 @@ const usersPars = async () => {
         let index = 0;
 
         for (const modelId of modelsId) {
-          users(modelId, undefined).then(() => {
+          users(modelId, undefined).finally(() => {
             index++;
 
             if (index === modelsId.length) {
@@ -170,8 +172,6 @@ const usersPars = async () => {
     path.join(__dirname, "output/meta.txt")
   );
 
-  return;
-
   const chunks = chunkArray(
     Array.from(usersHandles.values()),
     proxyMeta.length
@@ -188,23 +188,27 @@ const usersPars = async () => {
 
           meatIndex++;
 
-          getUser(value, pr).then((userMetaResponse) => {
-            if (userMetaResponse) {
-              const meta = findUserMeta(userMetaResponse);
+          getUser(value, pr)
+            .then((userMetaResponse) => {
+              if (userMetaResponse) {
+                const meta = findUserMeta(userMetaResponse);
 
-              if (meta !== null && userIsVip(userMetaResponse)) {
-                console.log("USER META_ADD", meta);
+                if (meta !== null) {
+                  console.log("USER META_ADD", meta);
 
-                usersMeta.push(meta);
+                  usersMeta.push(meta);
+                }
               }
-            }
+            })
+            .finally(() => {
+              index++;
 
-            index++;
+              if (index === chunk.length) {
+                console.log("RESPOLVE");
 
-            if (index === chunk.length) {
-              resolve();
-            }
-          });
+                resolve();
+              }
+            });
         }
       })
     );
@@ -223,7 +227,7 @@ const usersPars = async () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  await addUsersToDataBase("VIP_USERS_PARSER", usersMeta);
+  await addUsersToDataBase("ALL_USERS_PARSER", usersMeta);
 
   console.log("Data is saved to data base");
 };
