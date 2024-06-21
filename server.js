@@ -17,6 +17,8 @@ import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
 
+import { META } from "./src/const/test-data.js";
+
 import { userIsVip } from "./src/utils/user-is-vip.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -184,9 +186,9 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  addUsersToDataBase("All_USERS_PARSER", usersMeta).then(() => {
-    console.log("Data is saved to data base");
-  });
+  // addUsersToDataBase("All_USERS_PARSER", usersMeta).then(() => {
+  //   console.log("Data is saved to data base");
+  // });
 };
 
 /**
@@ -243,15 +245,12 @@ const usersPars = async () => {
 
   workers = proxyMeta.length;
 
+  const data = META;
+
   for (let i = 0; i < workers; i++) {
     const proxy = proxyMeta[i];
 
-    worker(
-      getUserMeta,
-      proxy,
-      Array.from(usersHandles.values()),
-      finallyAction
-    );
+    worker(getUserMeta, proxy, data, finallyAction);
   }
 };
 
