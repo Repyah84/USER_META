@@ -18,7 +18,7 @@ export const proxyIs = async (proxy) => {
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 60000);
+  }, 30000);
 
   try {
     await fetch("https://www.manyvids.com/", {

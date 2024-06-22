@@ -6,10 +6,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { addUsersToDataBase } from "./src/modules/add-users-to-data-base.js";
+import { spawn } from "node:child_process";
 
 import { getUsers } from "./src/api/get-users.js";
-import { getUser } from "./src/api/get-user.js";
-import { findUserMeta } from "./src/utils/find-user-meta.js";
+
 import { save } from "./src/modules/save.js";
 import { formatMilliseconds } from "./src/utils/time.js";
 import { getModels } from "./src/api/get-models.js";
@@ -19,35 +19,39 @@ import { PROXY } from "./src/const/proxy.js";
 
 import { META } from "./src/const/test-data.js";
 
-import { userIsVip } from "./src/utils/user-is-vip.js";
+import EventEmitter from "node:events";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const userParserEvent = new EventEmitter();
 
 const TEST = false;
 
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
-let workers = 0;
-let indexData = -1;
-
 let start = 0;
 let end = 0;
 
-/** @type {Set<string>} */
-const modelsIds = new Set();
+let workersCounter = 0;
 
 /** @type {Set<string>} */
-const usersHandles = new Set();
+const globalModelsIds = new Set();
+
+/** @type {Set<string>} */
+const globalUsersHandles = new Set();
 
 /** @type {Array<string>} */
-const usersMeta = [];
+const globalUsersMeta = [];
 
 /** @type {Array<string>} */
-const proxyMeta = [];
+const globalUsersMetaCache = [];
 
 /** @type {Array<string>} */
-const proxyRotten = [];
+const globalProxyMeta = [];
+
+/** @type {Array<string>} */
+const globalProxyRotten = [];
 
 /**
  * @param {string[]} proxyList
@@ -60,9 +64,9 @@ const initProxy = async (proxyList) => {
     console.log(res);
 
     if (res) {
-      proxyMeta.push(meta);
+      globalProxyMeta.push(meta);
     } else {
-      proxyRotten.push(meta);
+      globalProxyRotten.push(meta);
     }
   }
 };
@@ -79,7 +83,7 @@ const models = async (page) => {
       if (model.guid) {
         console.log("MODEL_ID_ADD", model.guid);
 
-        modelsIds.add(model.guid);
+        globalModelsIds.add(model.guid);
       }
     }
   }
@@ -87,7 +91,7 @@ const models = async (page) => {
   const filter = TEST ? 1 : !modelsResponse || modelsResponse.totalPages;
 
   if (filter === page) {
-    console.log("MODELS_ID_READY", modelsIds.size);
+    console.log("MODELS_ID_READY", globalModelsIds.size);
 
     return;
   }
@@ -109,12 +113,12 @@ const users = async (modalId, next) => {
       if (user.handle) {
         console.log("USER_HANDLE", user.handle);
 
-        usersHandles.add(user.handle);
+        globalUsersHandles.add(user.handle);
       }
     });
   }
 
-  if (usersHandles.size >= MAX_LENGTH) {
+  if (globalUsersHandles.size >= MAX_LENGTH) {
     return;
   }
 
@@ -124,71 +128,71 @@ const users = async (modalId, next) => {
 };
 
 /**
- * @param {number} index
- * @param {string[]} usersHandlesList
- * @returns
- */
-const getUserMeta = (usersHandlesList, index) => usersHandlesList[index];
-
-/**
- *
- * @param {(value: string[], idex: number) => string} metaFn
+ * @param {string} userMeta
  * @param {string} proxy
- * @param {string[]}usersHandlesList
- * @param {() => void} finallyActionFn
+ * @returns {void}
  */
-const worker = async (metaFn, proxy, usersHandlesList, finallyActionFn) => {
-  do {
-    indexData++;
+const worker = (userMeta, proxy) => {
+  const childProcess = spawn("node", ["parser.js", `${userMeta}`, `${proxy}`]);
 
-    const userMeta = metaFn(usersHandlesList, indexData);
+  childProcess.stdout.on("data", (data) => {
+    const user = data.toString();
 
-    await new Promise((resolve) => {
-      getUser(userMeta, proxy)
-        .then((userMetaResponse) => {
-          if (userMetaResponse) {
-            const meta = findUserMeta(userMetaResponse);
+    console.log("USER_META", user);
 
-            if (meta !== null) {
-              console.log("USER META_ADD", meta);
+    globalUsersMeta.push(user);
+  });
 
-              usersMeta.push(meta);
-            }
-          }
-        })
-        .finally(() => {
-          setTimeout(resolve, 2000);
-        });
-    });
-  } while (indexData < usersHandlesList.length);
+  childProcess.stderr.on("data", (data) => {
+    console.error(`[PARENT] stderr from child: ${data}`);
 
-  workers--;
+    userParserEvent.emit("parser", proxy);
+  });
 
-  if (workers === 0) {
-    finallyActionFn();
-  }
+  childProcess.on("close", (code) => {
+    userParserEvent.emit("parser", proxy);
+  });
+
+  childProcess.on("error", (err) => {
+    userParserEvent.emit("parser", proxy);
+  });
 };
 
 /**
- * @returns
+ * @returns {void}
  */
 const finallyAction = () => {
   end = Date.now();
 
   const info = {
-    all: usersHandles.size,
-    active: usersMeta.length,
+    all: globalUsersHandles.size,
+    active: globalUsersMeta.length,
     time: formatMilliseconds(end - start),
   };
 
   save(
-    `${JSON.stringify(usersMeta)}ParsInfo:${JSON.stringify(info)}`,
+    `${JSON.stringify(globalUsersMeta)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
 
-  // addUsersToDataBase("All_USERS_PARSER", usersMeta).then(() => {
-  //   console.log("Data is saved to data base");
-  // });
+  addUsersToDataBase("All_USERS_PARSER", globalUsersMeta).then(() => {
+    console.log("Data is saved to data base");
+
+    process.exit(0);
+  });
+};
+
+/**
+ * @returns {string}
+ */
+const getUsersMeta = () => {
+  const meta = globalUsersMetaCache[0];
+
+  globalUsersMetaCache.splice(0, 1);
+
+  console.log(globalUsersMetaCache.length);
+
+  return meta;
 };
 
 /**
@@ -198,9 +202,11 @@ const usersPars = async () => {
   await initProxy(PROXY);
 
   save(
-    `proxyMeta${JSON.stringify(proxyMeta)}length:${
-      proxyMeta.length
-    }/proxyRotten${JSON.stringify(proxyRotten)}length:${proxyRotten.length}`,
+    `proxyMeta${JSON.stringify(globalProxyMeta)}length:${
+      globalProxyMeta.length
+    }/proxyRotten${JSON.stringify(globalProxyRotten)}length:${
+      globalProxyRotten.length
+    }`,
     path.join(__dirname, "output/proxy.txt")
   );
 
@@ -208,7 +214,7 @@ const usersPars = async () => {
 
   await models(0);
 
-  const chunksModelsId = chunkArray(Array.from(modelsIds.values()), 100);
+  const chunksModelsId = chunkArray(Array.from(globalModelsIds.values()), 100);
 
   for (const modelsId of chunksModelsId) {
     await /** @type {Promise<void>} */ (
@@ -231,27 +237,47 @@ const usersPars = async () => {
   end = Date.now();
 
   const handlesInfo = {
-    modals: modelsIds.size,
-    handles: usersHandles.size,
+    modals: globalModelsIds.size,
+    handles: globalUsersHandles.size,
     time: formatMilliseconds(end - start),
   };
 
   save(
     `${JSON.stringify(
-      Array.from(usersHandles.values())
+      Array.from(globalUsersHandles.values())
     )}ParsInfo:${JSON.stringify(handlesInfo)}`,
     path.join(__dirname, "output/meta.txt")
   );
 
-  workers = proxyMeta.length;
+  workersCounter = globalProxyMeta.length;
 
-  const data = META;
+  for (const meta of Array.from(globalUsersHandles.values())) {
+    globalUsersMetaCache.push(meta);
+  }
 
-  for (let i = 0; i < workers; i++) {
-    const proxy = proxyMeta[i];
+  for (const proxy of globalProxyMeta) {
+    const metaList = getUsersMeta();
 
-    worker(getUserMeta, proxy, data, finallyAction);
+    worker(metaList, proxy);
   }
 };
+
+userParserEvent.on("parser", (proxy) => {
+  if (globalUsersMetaCache.length === 0) {
+    workersCounter--;
+
+    console.log("worker finished", workersCounter);
+
+    if (workersCounter === 0) {
+      finallyAction();
+    }
+
+    return;
+  }
+
+  const metaList = getUsersMeta();
+
+  worker(metaList, proxy);
+});
 
 usersPars();

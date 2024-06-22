@@ -13,7 +13,7 @@ import { SIZE } from "../const/size.js";
  *      totalPages: number
  * }} ResponseData
  * @param {number} page
- * @returns {Promise< ResponseData| null>}
+ * @returns {Promise<ResponseData| null>}
  */
 export const getModels = async (page) => {
   try {
@@ -42,6 +42,10 @@ export const getModels = async (page) => {
         method: "GET",
       }
     );
+
+    if (!response.ok) {
+      return null;
+    }
 
     return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {

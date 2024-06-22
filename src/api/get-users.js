@@ -54,6 +54,10 @@ export const getUsers = async (modalId, next) => {
       }
     );
 
+    if (!response.ok) {
+      return null;
+    }
+
     return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {
     if (error instanceof AbortError) {

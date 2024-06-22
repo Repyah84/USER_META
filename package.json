@@ -13,10 +13,8 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "axios": "^1.7.2",
     "https-proxy-agent": "^7.0.4",
-    "node-fetch": "^3.3.2",
-    "proxy-check": "^1.0.8"
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.11"
