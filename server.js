@@ -37,7 +37,7 @@ let WORKERS_COUNTER = 0;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
@@ -87,15 +87,15 @@ const stopMetric = () => {
  * @returns {Promise<void>}
  */
 const initProxy = async (proxyList) => {
-  for (const meta of proxyList) {
-    const res = await proxyIs(meta);
+  for (const proxy of proxyList) {
+    const res = await proxyIs(proxy);
 
-    console.log(res);
+    console.log(`${proxy}`, res);
 
     if (res) {
-      PROXY_META.push(meta);
+      PROXY_META.push(proxy);
     } else {
-      PROXY_ROTTEN.push(meta);
+      PROXY_ROTTEN.push(proxy);
     }
   }
 };
