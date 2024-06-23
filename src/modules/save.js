@@ -17,3 +17,16 @@ export const save = (data, path) => {
     }
   });
 };
+
+/**
+ * @param {string} data
+ * @param {string} path
+ */
+export const saveSync = (data, path) => {
+  try {
+    fs.writeFileSync(path, data, "utf8");
+    console.log("Данные успешно записаны в файл:", path);
+  } catch (err) {
+    console.error("Ошибка при записи в файл:", err);
+  }
+};

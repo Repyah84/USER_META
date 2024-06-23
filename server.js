@@ -10,7 +10,7 @@ import { spawn } from "node:child_process";
 
 import { getUsers } from "./src/api/get-users.js";
 
-import { save } from "./src/modules/save.js";
+import { save, saveSync } from "./src/modules/save.js";
 import { formatMilliseconds } from "./src/utils/time.js";
 import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
@@ -170,7 +170,7 @@ const finallyAction = () => {
     time: formatMilliseconds(end - start),
   };
 
-  save(
+  saveSync(
     `${JSON.stringify(globalUsersMeta)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
@@ -180,9 +180,7 @@ const finallyAction = () => {
 
   //   process.exit(0);
   // });
-  Promise.resolve().then(() => {
-    process.exit(0);
-  });
+  process.exit(0);
 };
 
 /**
