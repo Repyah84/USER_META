@@ -61,11 +61,12 @@ const PROXY_META = [];
 const PROXY_ROTTEN = [];
 
 /**
+ * @param {Array<unknown>} list
  * @returns {void}
  */
-const runMetric = () => {
+const runMetric = (list) => {
   INTERVAL = setInterval(() => {
-    console.log("ELEMENTS_LEFT", USERS_META_CACHE.length);
+    console.log("ELEMENTS_LEFT", list.length);
   }, 60000);
 };
 
@@ -296,7 +297,7 @@ const usersPars = async () => {
     worker(metaList, proxy);
   }
 
-  runMetric();
+  runMetric(USERS_META_CACHE);
 };
 
 userParserEvent.on("parser", (proxy) => {
