@@ -17,8 +17,6 @@ import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
 
-import { META } from "./src/const/test-data.js";
-
 import EventEmitter from "node:events";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,32 +24,63 @@ const __dirname = path.dirname(__filename);
 
 const userParserEvent = new EventEmitter();
 
+/** @type {number} */
+let START = 0;
+
+/** @type {number} */
+let END = 0;
+
+/** @type {number} */
+let WORKERS_COUNTER = 0;
+
+/** @type {null | NodeJS.Timeout} */
+let INTERVAL = null;
+
+/** @type {boolean} */
 const TEST = true;
 
+/** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
-let start = 0;
-let end = 0;
-
-let workersCounter = 0;
+/** @type {Set<string>} */
+const MODELS_ID = new Set();
 
 /** @type {Set<string>} */
-const globalModelsIds = new Set();
-
-/** @type {Set<string>} */
-const globalUsersHandles = new Set();
+const USERS_HANDLES = new Set();
 
 /** @type {Array<string>} */
-const globalUsersMeta = [];
+const USERS_META = [];
 
 /** @type {Array<string>} */
-const globalUsersMetaCache = [];
+const USERS_META_CACHE = [];
 
 /** @type {Array<string>} */
-const globalProxyMeta = [];
+const PROXY_META = [];
 
 /** @type {Array<string>} */
-const globalProxyRotten = [];
+const PROXY_ROTTEN = [];
+
+/**
+ * @returns {void}
+ */
+const runMetric = () => {
+  INTERVAL = setInterval(() => {
+    console.log("ELEMENTS_LEFT", USERS_META_CACHE.length);
+  }, 60000);
+};
+
+/**
+ * @returns {void}
+ */
+const stopMetric = () => {
+  if (INTERVAL === null) {
+    return;
+  }
+
+  clearInterval(INTERVAL);
+
+  INTERVAL = null;
+};
 
 /**
  * @param {string[]} proxyList
@@ -64,9 +93,9 @@ const initProxy = async (proxyList) => {
     console.log(res);
 
     if (res) {
-      globalProxyMeta.push(meta);
+      PROXY_META.push(meta);
     } else {
-      globalProxyRotten.push(meta);
+      PROXY_ROTTEN.push(meta);
     }
   }
 };
@@ -81,9 +110,7 @@ const models = async (page) => {
   if (modelsResponse) {
     for (const model of modelsResponse.creators) {
       if (model.guid) {
-        console.log("MODEL_ID_ADD", model.guid);
-
-        globalModelsIds.add(model.guid);
+        MODELS_ID.add(model.guid);
       }
     }
   }
@@ -91,8 +118,6 @@ const models = async (page) => {
   const filter = TEST ? 1 : !modelsResponse || modelsResponse.totalPages;
 
   if (filter === page) {
-    console.log("MODELS_ID_READY", globalModelsIds.size);
-
     return;
   }
 
@@ -111,14 +136,12 @@ const users = async (modalId, next) => {
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {
       if (user.handle) {
-        console.log("USER_HANDLE", user.handle);
-
-        globalUsersHandles.add(user.handle);
+        USERS_HANDLES.add(user.handle);
       }
     });
   }
 
-  if (globalUsersHandles.size >= MAX_LENGTH) {
+  if (USERS_HANDLES.size >= MAX_LENGTH) {
     return;
   }
 
@@ -138,9 +161,7 @@ const worker = (userMeta, proxy) => {
   childProcess.stdout.on("data", (data) => {
     const user = data.toString();
 
-    console.log("USER_META", user);
-
-    globalUsersMeta.push(user);
+    USERS_META.push(user);
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -149,11 +170,13 @@ const worker = (userMeta, proxy) => {
     userParserEvent.emit("parser", proxy);
   });
 
-  childProcess.on("close", (code) => {
+  childProcess.on("close", () => {
     userParserEvent.emit("parser", proxy);
   });
 
   childProcess.on("error", (err) => {
+    console.error(`[PARENT] Error spawning child process: ${err}`);
+
     userParserEvent.emit("parser", proxy);
   });
 };
@@ -162,24 +185,29 @@ const worker = (userMeta, proxy) => {
  * @returns {void}
  */
 const finallyAction = () => {
-  end = Date.now();
+  stopMetric();
+
+  END = Date.now();
 
   const info = {
-    all: globalUsersHandles.size,
-    active: globalUsersMeta.length,
-    time: formatMilliseconds(end - start),
+    all: USERS_HANDLES.size,
+    active: USERS_META.length,
+    time: formatMilliseconds(END - START),
   };
 
+  console.dir(info);
+
   saveSync(
-    `${JSON.stringify(globalUsersMeta)}ParsInfo:${JSON.stringify(info)}`,
+    `${JSON.stringify(USERS_META)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
 
-  // addUsersToDataBase("All_USERS_PARSER", globalUsersMeta).then(() => {
-  //   console.log("Data is saved to data base");
+  addUsersToDataBase("All_USERS_PARSER", USERS_META).then(() => {
+    console.log("Data is saved to data base");
 
-  //   process.exit(0);
-  // });
+    process.exit(0);
+  });
+
   process.exit(0);
 };
 
@@ -187,11 +215,9 @@ const finallyAction = () => {
  * @returns {string}
  */
 const getUsersMeta = () => {
-  const meta = globalUsersMetaCache[0];
+  const meta = USERS_META_CACHE[0];
 
-  globalUsersMetaCache.splice(0, 1);
-
-  console.log(globalUsersMetaCache.length);
+  USERS_META_CACHE.splice(0, 1);
 
   return meta;
 };
@@ -203,19 +229,23 @@ const usersPars = async () => {
   await initProxy(PROXY);
 
   save(
-    `proxyMeta${JSON.stringify(globalProxyMeta)}length:${
-      globalProxyMeta.length
-    }/proxyRotten${JSON.stringify(globalProxyRotten)}length:${
-      globalProxyRotten.length
-    }`,
+    `proxyMeta${JSON.stringify(PROXY_META)}length:${
+      PROXY_META.length
+    }/proxyRotten${JSON.stringify(PROXY_ROTTEN)}length:${PROXY_ROTTEN.length}`,
     path.join(__dirname, "output/proxy.txt")
   );
 
-  start = Date.now();
+  START = Date.now();
+
+  console.log("[MODELS_PARSER_START]");
 
   await models(0);
 
-  const chunksModelsId = chunkArray(Array.from(globalModelsIds.values()), 100);
+  console.log("[MODELS_PARSER_END]", MODELS_ID.size);
+
+  const chunksModelsId = chunkArray(Array.from(MODELS_ID.values()), 100);
+
+  console.log("[USERS_META_PARSER_START]");
 
   for (const modelsId of chunksModelsId) {
     await /** @type {Promise<void>} */ (
@@ -235,41 +265,45 @@ const usersPars = async () => {
     );
   }
 
-  end = Date.now();
+  END = Date.now();
 
   const handlesInfo = {
-    modals: globalModelsIds.size,
-    handles: globalUsersHandles.size,
-    time: formatMilliseconds(end - start),
+    modals: MODELS_ID.size,
+    handles: USERS_HANDLES.size,
+    time: formatMilliseconds(END - START),
   };
+
+  console.dir(handlesInfo);
 
   save(
     `${JSON.stringify(
-      Array.from(globalUsersHandles.values())
+      Array.from(USERS_HANDLES.values())
     )}ParsInfo:${JSON.stringify(handlesInfo)}`,
     path.join(__dirname, "output/meta.txt")
   );
 
-  workersCounter = globalProxyMeta.length;
+  console.log("USERS_PARSER_START");
 
-  for (const meta of Array.from(globalUsersHandles.values())) {
-    globalUsersMetaCache.push(meta);
+  WORKERS_COUNTER = PROXY_META.length;
+
+  for (const meta of Array.from(USERS_HANDLES.values())) {
+    USERS_META_CACHE.push(meta);
   }
 
-  for (const proxy of globalProxyMeta) {
+  for (const proxy of PROXY_META) {
     const metaList = getUsersMeta();
 
     worker(metaList, proxy);
   }
+
+  runMetric();
 };
 
 userParserEvent.on("parser", (proxy) => {
-  if (globalUsersMetaCache.length === 0) {
-    workersCounter--;
+  if (USERS_META_CACHE.length === 0) {
+    WORKERS_COUNTER--;
 
-    console.log("worker finished", workersCounter);
-
-    if (workersCounter === 0) {
+    if (WORKERS_COUNTER === 0) {
       finallyAction();
     }
 
