@@ -26,7 +26,7 @@ const __dirname = path.dirname(__filename);
 
 const userParserEvent = new EventEmitter();
 
-const TEST = false;
+const TEST = true;
 
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
@@ -175,9 +175,12 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  addUsersToDataBase("All_USERS_PARSER", globalUsersMeta).then(() => {
-    console.log("Data is saved to data base");
+  // addUsersToDataBase("All_USERS_PARSER", globalUsersMeta).then(() => {
+  //   console.log("Data is saved to data base");
 
+  //   process.exit(0);
+  // });
+  Promise.resolve().then(() => {
     process.exit(0);
   });
 };

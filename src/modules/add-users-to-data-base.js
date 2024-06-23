@@ -42,7 +42,7 @@ export const addUsersToDataBase = async (listName, users) => {
         addUsers({ users: usersModel }, access_token, refresh_token)
           .then((response) => {
             if (response === null) {
-              resolve();
+              return;
             }
 
             return addUsersToList(
