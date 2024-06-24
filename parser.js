@@ -3,20 +3,18 @@
 "use strict";
 
 import { getUser } from "./src/api/get-user.js";
-import { findUserMeta } from "./src/utils/find-user-meta.js";
 
 setTimeout(async () => {
-  const [userMeta, proxy] = process.argv.slice(2);
+  try {
+    const [userMeta, proxy] = process.argv.slice(2);
 
-  const userMetaResponse = await getUser(userMeta, proxy);
+    const userMetaResponse = await getUser(userMeta, proxy);
 
-  if (userMetaResponse !== null) {
-    const meta = findUserMeta(userMetaResponse);
-
-    if (meta !== null) {
-      process.stdout.write(meta);
+    if (userMetaResponse !== null) {
+      process.stdout.write(userMetaResponse);
     }
+  } catch {
+  } finally {
+    process.exit(0);
   }
-
-  process.exit(0);
-}, 2000);
+}, 1000);

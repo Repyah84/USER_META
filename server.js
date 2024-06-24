@@ -4,6 +4,7 @@
 
 import path from "path";
 import { fileURLToPath } from "url";
+import EventEmitter from "node:events";
 
 import { addUsersToDataBase } from "./src/modules/add-users-to-data-base.js";
 import { spawn } from "node:child_process";
@@ -16,8 +17,7 @@ import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
-
-import EventEmitter from "node:events";
+import { findUserMeta } from "./src/utils/find-user-meta.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +31,7 @@ let START = 0;
 let END = 0;
 
 /** @type {number} */
-let WORKERS_COUNTER = 0;
+let WORKERS_COUNTER = 20;
 
 /** @type {null | NodeJS.Timeout} */
 let INTERVAL = null;
@@ -56,6 +56,9 @@ const USERS_META_CACHE = [];
 
 /** @type {Array<string>} */
 const PROXY_META = [];
+
+/** @type {Array<string>} */
+const PROXY_META_CACHE = [];
 
 /** @type {Array<string>} */
 const PROXY_ROTTEN = [];
@@ -152,33 +155,43 @@ const users = async (modalId, next) => {
 };
 
 /**
- * @param {string} userMeta
- * @param {string} proxy
  * @returns {void}
  */
-const worker = (userMeta, proxy) => {
+const worker = () => {
+  const proxy = getProxy();
+
+  const userMeta = getUsersMeta();
+
   const childProcess = spawn("node", ["parser.js", `${userMeta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
     const user = data.toString();
 
-    USERS_META.push(user);
+    console.log("[PARENT_DATA FROM_CHILD]", user);
+
+    const meta = findUserMeta(user);
+
+    if (meta === null) {
+      return;
+    }
+
+    USERS_META.push(meta);
   });
 
   childProcess.stderr.on("data", (data) => {
     console.error(`[PARENT] stderr from child: ${data}`);
 
-    userParserEvent.emit("parser", proxy);
+    userParserEvent.emit("parser");
   });
 
   childProcess.on("close", () => {
-    userParserEvent.emit("parser", proxy);
+    userParserEvent.emit("parser");
   });
 
   childProcess.on("error", (err) => {
     console.error(`[PARENT] Error spawning child process: ${err}`);
 
-    userParserEvent.emit("parser", proxy);
+    userParserEvent.emit("parser");
   });
 };
 
@@ -203,24 +216,43 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  addUsersToDataBase("All_USERS_PARSER", USERS_META).then(() => {
+  addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
     console.log("Data is saved to data base");
 
     process.exit(0);
   });
-
-  process.exit(0);
 };
 
 /**
  * @returns {string}
  */
 const getUsersMeta = () => {
-  const meta = USERS_META_CACHE[0];
+  const meta = USERS_META_CACHE.shift();
 
-  USERS_META_CACHE.splice(0, 1);
+  if (meta === undefined) {
+    throw new Error("USERS_META_CACHE invalid");
+  }
 
   return meta;
+};
+
+/**
+ * @returns {string}
+ */
+const getProxy = () => {
+  if (PROXY_META_CACHE.length === 0) {
+    for (const proxy of PROXY_META) {
+      PROXY_META_CACHE.push(proxy);
+    }
+  }
+
+  const proxy = PROXY_META_CACHE.shift();
+
+  if (proxy === undefined) {
+    throw new Error("PROXY_META_CACHE invalid");
+  }
+
+  return proxy;
 };
 
 /**
@@ -291,16 +323,14 @@ const usersPars = async () => {
     USERS_META_CACHE.push(meta);
   }
 
-  for (const proxy of PROXY_META) {
-    const metaList = getUsersMeta();
-
-    worker(metaList, proxy);
+  for (let i = 0; i < WORKERS_COUNTER; i++) {
+    worker();
   }
 
   runMetric(USERS_META_CACHE);
 };
 
-userParserEvent.on("parser", (proxy) => {
+userParserEvent.on("parser", () => {
   if (USERS_META_CACHE.length === 0) {
     WORKERS_COUNTER--;
 
@@ -311,9 +341,7 @@ userParserEvent.on("parser", (proxy) => {
     return;
   }
 
-  const metaList = getUsersMeta();
-
-  worker(metaList, proxy);
+  worker();
 });
 
 usersPars();
