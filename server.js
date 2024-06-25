@@ -155,31 +155,25 @@ const users = async (modalId, next) => {
 };
 
 /**
+ * @param {string} meta
+ * @param {string} proxy
  * @returns {void}
  */
-const worker = () => {
-  const proxy = getProxy();
-
-  const userMeta = getUsersMeta();
-
-  const childProcess = spawn("node", ["parser.js", `${userMeta}`, `${proxy}`]);
+const worker = (meta, proxy) => {
+  const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
-    const user = data.toString();
+    const dataFromChild = data.toString();
 
-    if (typeof user !== "string") {
+    if (!dataFromChild.startsWith("[DATA FROM CHILD]")) {
       return;
     }
 
-    const meta = findUserMeta(user);
+    const user = dataFromChild.split("[DATA FROM CHILD]")[1];
 
-    if (meta === null) {
-      return;
-    }
+    console.log("[PARENT_DATA]", user);
 
-    console.log("[PARENT_DATA FROM_CHILD]", meta);
-
-    USERS_META.push(meta);
+    USERS_META.push(user);
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -328,7 +322,11 @@ const usersPars = async () => {
   }
 
   for (let i = 0; i < WORKERS_COUNTER; i++) {
-    worker();
+    const meta = getUsersMeta();
+
+    const proxy = getProxy();
+
+    worker(meta, proxy);
   }
 
   runMetric(USERS_META_CACHE);
@@ -345,7 +343,11 @@ userParserEvent.on("parser", () => {
     return;
   }
 
-  worker();
+  const meta = getUsersMeta();
+
+  const proxy = getProxy();
+
+  worker(meta, proxy);
 });
 
 usersPars();

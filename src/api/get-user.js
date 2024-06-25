@@ -2,7 +2,7 @@
 
 "use strict";
 
-import fetch from "node-fetch";
+import fetch, { AbortError } from "node-fetch";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 /**
@@ -57,6 +57,12 @@ export const getUser = async (userName, proxyData) => {
 
     return await response.text();
   } catch (error) {
+    if (error instanceof AbortError) {
+      console.log("request was aborted");
+    } else {
+      console.log(error);
+    }
+
     return null;
   } finally {
     clearTimeout(timeout);
