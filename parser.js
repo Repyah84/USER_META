@@ -17,4 +17,4 @@ setTimeout(async () => {
   } finally {
     process.exit(0);
   }
-}, 5000);
+}, 1000);
