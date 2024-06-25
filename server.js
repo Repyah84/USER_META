@@ -17,7 +17,6 @@ import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
-import { findUserMeta } from "./src/utils/find-user-meta.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +36,7 @@ let WORKERS_COUNTER = 20;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
@@ -214,11 +213,10 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  // addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
-  //   console.log("Data is saved to data base");
-
-  // });
-  process.exit(0);
+  addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
+    console.log("Data is saved to data base");
+  });
+  // process.exit(0);
 };
 
 /**
