@@ -37,7 +37,7 @@ let WORKERS_COUNTER = 20;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = false;
+const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
@@ -167,13 +167,17 @@ const worker = () => {
   childProcess.stdout.on("data", (data) => {
     const user = data.toString();
 
-    console.log("[PARENT_DATA FROM_CHILD]", user);
+    if (typeof user !== "string") {
+      return;
+    }
 
     const meta = findUserMeta(user);
 
     if (meta === null) {
       return;
     }
+
+    console.log("[PARENT_DATA FROM_CHILD]", meta);
 
     USERS_META.push(meta);
   });
@@ -216,11 +220,11 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
-    console.log("Data is saved to data base");
+  // addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
+  //   console.log("Data is saved to data base");
 
-    process.exit(0);
-  });
+  // });
+  process.exit(0);
 };
 
 /**
