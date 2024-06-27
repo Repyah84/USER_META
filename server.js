@@ -332,6 +332,8 @@ const usersPars = async () => {
     worker(meta, proxy);
   }
 
+  console.log("TEST");
+
   runMetric(USERS_META_CACHE);
 };
 
