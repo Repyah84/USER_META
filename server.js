@@ -164,13 +164,13 @@ const worker = (meta, proxy) => {
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
 
+    console.log("[CHILD DATA]", dataFromChild);
+
     if (!dataFromChild.startsWith("[DATA FROM CHILD]")) {
       return;
     }
 
     const user = dataFromChild.split("[DATA FROM CHILD]")[1];
-
-    console.log("[PARENT_DATA]", user);
 
     USERS_META.push(user);
   });
@@ -213,10 +213,15 @@ const finallyAction = () => {
     path.join(__dirname, "output/users.txt")
   );
 
-  addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
-    console.log("Data is saved to data base");
-  });
-  // process.exit(0);
+  if (TEST) {
+    process.exit(0);
+  } else {
+    addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
+      console.log("Data is saved to data base");
+
+      process.exit(0);
+    });
+  }
 };
 
 /**
