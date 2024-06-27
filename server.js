@@ -164,7 +164,11 @@ const worker = (meta, proxy) => {
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
 
-    console.log("[CHILD DATA]", dataFromChild);
+    if (dataFromChild.startsWith("[ERROR FROM CHILD]")) {
+      console.log("[ERROR FROM CHILD]", dataFromChild);
+
+      return;
+    }
 
     if (!dataFromChild.startsWith("[DATA FROM CHILD]")) {
       return;
