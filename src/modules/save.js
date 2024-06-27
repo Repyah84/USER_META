@@ -11,9 +11,9 @@ import fs from "fs";
 export const save = (data, path) => {
   fs.writeFile(path, data, "utf8", (err) => {
     if (err) {
-      console.error("Ошибка при записи в файл:", err);
+      console.error("Error writing to file:", err);
     } else {
-      console.log("Данные успешно записаны в файл:", path);
+      console.log("Data successfully written to file:", path);
     }
   });
 };
@@ -25,8 +25,8 @@ export const save = (data, path) => {
 export const saveSync = (data, path) => {
   try {
     fs.writeFileSync(path, data, "utf8");
-    console.log("Данные успешно записаны в файл:", path);
+    console.log("Data successfully written to file:", path);
   } catch (err) {
-    console.error("Ошибка при записи в файл:", err);
+    console.error("Error writing to file:", err);
   }
 };

@@ -6,7 +6,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import EventEmitter from "node:events";
 
-import { addUsersToDataBase } from "./src/modules/add-users-to-data-base.js";
 import { spawn } from "node:child_process";
 
 import { getUsers } from "./src/api/get-users.js";
@@ -17,6 +16,7 @@ import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { PROXY } from "./src/const/proxy.js";
+import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -220,7 +220,10 @@ const finallyAction = () => {
   if (TEST) {
     process.exit(0);
   } else {
-    addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
+    addNewUserToDataBase(
+      `NEW_USERS_PARSER${new Date(Date.now())}`,
+      USERS_META
+    ).finally(() => {
       console.log("Data is saved to data base");
 
       process.exit(0);
