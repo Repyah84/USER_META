@@ -22,7 +22,7 @@ export const getUsers = async (modalId, next) => {
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 5000);
+  }, 10000);
 
   try {
     const response = await fetch(
@@ -53,6 +53,10 @@ export const getUsers = async (modalId, next) => {
         signal: controller.signal,
       }
     );
+
+    if (!response.ok) {
+      return null;
+    }
 
     return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {

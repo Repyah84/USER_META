@@ -18,10 +18,10 @@ export const proxyIs = async (proxy) => {
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 60000);
+  }, 30000);
 
   try {
-    await fetch("https://www.google.com/", {
+    await fetch("https://www.manyvids.com/", {
       method: "GET",
       agent,
       signal: controller.signal,

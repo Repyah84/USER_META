@@ -19,7 +19,7 @@ export const getUser = async (userName, proxyData) => {
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 7000);
+  }, 30000);
 
   try {
     const response = await fetch(
