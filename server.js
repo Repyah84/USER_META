@@ -15,8 +15,8 @@ import { formatMilliseconds } from "./src/utils/time.js";
 import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
-import { PROXY } from "./src/const/proxy.js";
 import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
+import { PROXY } from "./src/const/proxy.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +30,7 @@ let START = 0;
 let END = 0;
 
 /** @type {number} */
-let WORKERS_COUNTER = 20;
+let WORKERS_COUNTER = 40;
 
 /** @type {null | NodeJS.Timeout} */
 let INTERVAL = null;
@@ -93,7 +93,7 @@ const initProxy = async (proxyList) => {
   for (const proxy of proxyList) {
     const res = await proxyIs(proxy);
 
-    console.log(`${proxy}`, res);
+    console.log(res, `${proxy}`);
 
     if (res) {
       PROXY_META.push(proxy);
@@ -324,8 +324,6 @@ const usersPars = async () => {
   );
 
   console.log("USERS_PARSER_START");
-
-  WORKERS_COUNTER = PROXY_META.length;
 
   for (const meta of Array.from(USERS_HANDLES.values())) {
     USERS_META_CACHE.push(meta);
