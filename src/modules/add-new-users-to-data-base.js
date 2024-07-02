@@ -7,16 +7,16 @@ import { login } from "../api/login.js";
 import { addUsers } from "../api/add-users.js";
 import { addUsersToList } from "../api/add-users-to-list.js";
 
-import { getUsersModel } from "../utils/get-users-model.js";
 import { chunkArray } from "../utils/split-to-chunks.js";
 import { getAllUserId } from "../api/get-all-users-id.js";
+import { UserData } from "../models/user.model.js";
 
 /**
  * @param {string}listName
- * @param {string[]} usersMeta
+ * @param {Array<UserData>} usersData
  * @returns {Promise<void>}
  */
-export const addNewUserToDataBase = async (listName, usersMeta) => {
+export const addNewUserToDataBase = async (listName, usersData) => {
   /** @type {Set<string>} */
   const compareUsers = new Set();
 
@@ -41,14 +41,15 @@ export const addNewUserToDataBase = async (listName, usersMeta) => {
     compareUsers.add(id);
   }
 
-  for (const user of getUsersModel(usersMeta)) {
+  for (const user of usersData) {
     if (!compareUsers.has(user.userId)) {
-      newUsers.push(user);
+      newUsers.push(user.getUserData());
     }
   }
 
   if (newUsers.length === 0) {
     console.log("new users list empty");
+
     return;
   }
 

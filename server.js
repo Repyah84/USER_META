@@ -17,6 +17,9 @@ import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
 import { PROXY } from "./src/const/proxy.js";
+import { UserData } from "./src/models/user.model.js";
+import { getUserMeta } from "./src/utils/get-user-model.js";
+import { getTags } from "./src/api/get-tags.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,19 +39,19 @@ let WORKERS_COUNTER = 40;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = false;
+const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
 
-/** @type {Set<string>} */
-const MODELS_ID = new Set();
+/** @type {Map<string, ModelDataPars>} */
+const MODELS = new Map();
 
-/** @type {Set<string>} */
-const USERS_HANDLES = new Set();
+/** @type {Map<string, string[]>} */
+const USERS_HANDLES = new Map();
 
-/** @type {Array<string>} */
-const USERS_META = [];
+/** @type {Array<UserData>} */
+const USERS = [];
 
 /** @type {Array<string>} */
 const USERS_META_CACHE = [];
@@ -112,8 +115,10 @@ const models = async (page) => {
 
   if (modelsResponse) {
     for (const model of modelsResponse.creators) {
-      if (model.guid) {
-        MODELS_ID.add(model.guid);
+      if (model.guid && !MODELS.has(model.guid)) {
+        const { guid, id } = model;
+
+        MODELS.set(guid, { id, guid, tags: [] });
       }
     }
   }
@@ -129,6 +134,44 @@ const models = async (page) => {
   await models(page);
 };
 
+const tags = async () => {
+  const modelsChunk = chunkArray(Array.from(MODELS.values()), 100);
+
+  for (const models of modelsChunk) {
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        let index = 0;
+
+        for (const { guid, id } of models) {
+          getTags(id)
+            .then((tags) => {
+              if (tags === null) {
+                return;
+              }
+
+              const modelMutate = MODELS.get(guid);
+
+              if (modelMutate === undefined) {
+                return;
+              }
+
+              for (const tag of tags.data) {
+                modelMutate.tags.push(tag);
+              }
+            })
+            .finally(() => {
+              index++;
+
+              if (index === models.length) {
+                resolve();
+              }
+            });
+        }
+      })
+    );
+  }
+};
+
 /**
  * @param {string} modalId
  * @param {string | undefined} next
@@ -139,7 +182,15 @@ const users = async (modalId, next) => {
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {
       if (user.handle) {
-        USERS_HANDLES.add(user.handle);
+        const handle = user.handle;
+
+        const userHandle = USERS_HANDLES.get(handle);
+
+        if (userHandle === undefined) {
+          USERS_HANDLES.set(handle, [modalId]);
+        } else {
+          userHandle.push(modalId);
+        }
       }
     });
   }
@@ -174,9 +225,32 @@ const worker = (meta, proxy) => {
       return;
     }
 
-    const user = dataFromChild.split("[DATA FROM CHILD]")[1];
+    /** @type {string} */
+    const userMeta = dataFromChild.split("[DATA FROM CHILD]")[1];
 
-    USERS_META.push(user);
+    const { userId, username, avatar_url, status } = getUserMeta(userMeta);
+
+    const user = new UserData(userId, username, status, avatar_url);
+
+    const modelsIdList = USERS_HANDLES.get(meta);
+
+    if (modelsIdList === undefined) {
+      return;
+    }
+
+    for (const modelId of modelsIdList) {
+      const model = MODELS.get(modelId);
+
+      if (model === undefined) {
+        return;
+      }
+
+      for (const { label } of model.tags) {
+        user.addTag(label);
+      }
+    }
+
+    USERS.push(user);
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -206,14 +280,14 @@ const finallyAction = () => {
 
   const info = {
     all: USERS_HANDLES.size,
-    active: USERS_META.length,
+    active: USERS.length,
     time: formatMilliseconds(END - START),
   };
 
-  console.dir(info);
+  console.log(USERS, false, null, true);
 
   saveSync(
-    `${JSON.stringify(USERS_META)}ParsInfo:${JSON.stringify(info)}`,
+    `${JSON.stringify(USERS.keys())}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
 
@@ -222,7 +296,7 @@ const finallyAction = () => {
   } else {
     addNewUserToDataBase(
       `NEW_USERS_PARSER${new Date(Date.now())}`,
-      USERS_META
+      USERS
     ).finally(() => {
       console.log("Data is saved to data base");
 
@@ -282,22 +356,24 @@ const usersPars = async () => {
 
   await models(0);
 
-  console.log("[MODELS_PARSER_END]", MODELS_ID.size);
+  console.log("[MODELS_PARSER_END]", MODELS.size);
 
-  const chunksModelsId = chunkArray(Array.from(MODELS_ID.values()), 100);
+  await tags();
+
+  const chunksModels = chunkArray(Array.from(MODELS.values()), 100);
 
   console.log("[USERS_META_PARSER_START]");
 
-  for (const modelsId of chunksModelsId) {
+  for (const models of chunksModels) {
     await /** @type {Promise<void>} */ (
       new Promise((resolve) => {
         let index = 0;
 
-        for (const modelId of modelsId) {
-          users(modelId, undefined).finally(() => {
+        for (const model of models) {
+          users(model.guid, undefined).finally(() => {
             index++;
 
-            if (index === modelsId.length) {
+            if (index === models.length) {
               resolve();
             }
           });
@@ -309,7 +385,7 @@ const usersPars = async () => {
   END = Date.now();
 
   const handlesInfo = {
-    modals: MODELS_ID.size,
+    modals: MODELS.size,
     handles: USERS_HANDLES.size,
     time: formatMilliseconds(END - START),
   };
@@ -318,15 +394,15 @@ const usersPars = async () => {
 
   save(
     `${JSON.stringify(
-      Array.from(USERS_HANDLES.values())
+      Array.from(USERS_HANDLES.keys())
     )}ParsInfo:${JSON.stringify(handlesInfo)}`,
     path.join(__dirname, "output/meta.txt")
   );
 
   console.log("USERS_PARSER_START");
 
-  for (const meta of Array.from(USERS_HANDLES.values())) {
-    USERS_META_CACHE.push(meta);
+  for (const handle of Array.from(USERS_HANDLES.keys())) {
+    USERS_META_CACHE.push(handle);
   }
 
   for (let i = 0; i < WORKERS_COUNTER; i++) {
