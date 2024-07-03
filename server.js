@@ -21,6 +21,7 @@ import { PROXY } from "./src/const/proxy.js";
 import { UserData } from "./src/models/user.model.js";
 import { getUserMeta } from "./src/utils/get-user-model.js";
 import { getTags } from "./src/api/get-tags.js";
+import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -285,24 +286,25 @@ const finallyAction = () => {
     time: formatMilliseconds(END - START),
   };
 
-  console.log(USERS, false, null, true);
-
   saveSync(
-    `${JSON.stringify(USERS.keys())}ParsInfo:${JSON.stringify(info)}`,
+    `${JSON.stringify(USERS)}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
 
   if (TEST) {
+    console.log(USERS, false, null, true);
+
     process.exit(0);
   } else {
-    addNewUserToDataBase(
-      `NEW_USERS_PARSER${new Date(Date.now())}`,
-      USERS
-    ).finally(() => {
-      console.log("Data is saved to data base");
+    addNewUserToDataBase(`NEW_USERS_PARSER${new Date(Date.now())}`, USERS)
+      .then(() => {
+        return addTagsToDataBase(USERS);
+      })
+      .finally(() => {
+        console.log("Data is saved to data base");
 
-      process.exit(0);
-    });
+        process.exit(0);
+      });
   }
 };
 
@@ -342,6 +344,8 @@ const getProxy = () => {
  * @returns {Promise<void>}
  */
 const usersPars = async () => {
+  START = Date.now();
+
   await initProxy(PROXY);
 
   save(
@@ -350,8 +354,6 @@ const usersPars = async () => {
     }/proxyRotten${JSON.stringify(PROXY_ROTTEN)}length:${PROXY_ROTTEN.length}`,
     path.join(__dirname, "output/proxy.txt")
   );
-
-  START = Date.now();
 
   console.log("[MODELS_PARSER_START]");
 

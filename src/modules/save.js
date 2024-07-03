@@ -25,6 +25,7 @@ export const save = (data, path) => {
 export const saveSync = (data, path) => {
   try {
     fs.writeFileSync(path, data, "utf8");
+
     console.log("Data successfully written to file:", path);
   } catch (err) {
     console.error("Error writing to file:", err);

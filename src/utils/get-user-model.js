@@ -1,4 +1,5 @@
 // @ts-check
+/// <reference  path="../types/user.type.js"/>
 
 "use strict";
 
