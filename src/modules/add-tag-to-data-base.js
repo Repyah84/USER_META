@@ -25,6 +25,8 @@ export const addTagsToDataBase = async (users, accessToken, refreshToken) => {
     for (const tags of usersIdsTthTagsChunk) {
       await addTags({ users: tags }, accessToken, refreshToken);
     }
+
+    return true;
   } catch (error) {
     console.log(error);
   }
