@@ -1,33 +1,29 @@
 // @ts-check
+/// <reference path="../types/add-tags-request.type.js" />
 
 "use strict";
 
 import fetch from "node-fetch";
-
 import { API } from "../const/api.js";
 import { request } from "../modules/request.js";
 
 /**
- * @typedef {{
- *      listId: string,
- *      userIds: string[]
- * }} RequestData
- * @param {RequestData} body
- * @param {string} accessToken
- * @param {string} refreshToken
- * @returns {Promise<boolean | null>}
+ * @param {{users: Array<UserWithTags>}} data
+ * @param {string}accessToken
+ * @param {string}refreshToken
+ * @returns {Promise<string | null>}
  */
-export const addUsersToList = async (body, accessToken, refreshToken) => {
+export const addTags = async (data, accessToken, refreshToken) => {
   try {
     const response = await request(
       (accessToken) =>
-        fetch(`${API}/add_users_to_list`, {
+        fetch(`${API}//add_tags`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(data),
         }),
       accessToken,
       refreshToken
@@ -37,7 +33,7 @@ export const addUsersToList = async (body, accessToken, refreshToken) => {
       return null;
     }
 
-    return await /** @type {Promise<boolean>} */ (response.json());
+    return await /** @type {Promise<string>} */ (response.json());
   } catch (error) {
     console.log(error);
 
