@@ -17,7 +17,7 @@ export const addTags = async (data, accessToken, refreshToken) => {
   try {
     const response = await request(
       (accessToken) =>
-        fetch(`${API}//add_tags`, {
+        fetch(`${API}/add_tags`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

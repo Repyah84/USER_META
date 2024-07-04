@@ -14,12 +14,12 @@ import { chunkArray } from "../utils/split-to-chunks.js";
  */
 export const addTagsToDataBase = async (users) => {
   /**@type {Array<UserWithTags>} */
-  const usersIdsTthTags = users.map((user) => ({
+  const usersIdsWithTags = users.map((user) => ({
     userId: user.userId,
     tags: user.getTags(),
   }));
 
-  const usersIdsTthTagsChunk = chunkArray(usersIdsTthTags, 10000);
+  const usersIdsWithTagsChunk = chunkArray(usersIdsWithTags, 10000);
 
   try {
     const auth = await login({ password: "admin", username: "admin" });
@@ -30,8 +30,8 @@ export const addTagsToDataBase = async (users) => {
 
     const { access_token, refresh_token } = auth;
 
-    for (const tags of usersIdsTthTagsChunk) {
-      await addTags({ users: tags }, access_token, refresh_token);
+    for (const users of usersIdsWithTagsChunk) {
+      await addTags({ users }, access_token, refresh_token);
     }
 
     return true;

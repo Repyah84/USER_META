@@ -41,7 +41,7 @@ let WORKERS_COUNTER = 40;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
@@ -177,6 +177,7 @@ const tags = async () => {
 /**
  * @param {string} modalId
  * @param {string | undefined} next
+ * @returns {Promise<void>}
  */
 const users = async (modalId, next) => {
   const usersResponse = await getUsers(modalId, next);
