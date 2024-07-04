@@ -1,5 +1,6 @@
 // @ts-check
 /// <reference path="../types/user.type.js"/>
+/// <reference path="../types/user-data.type.js"/>
 
 "use strict";
 
@@ -10,7 +11,6 @@ import { addUsersToList } from "../api/add-users-to-list.js";
 
 import { chunkArray } from "../utils/split-to-chunks.js";
 import { getAllUserId } from "../api/get-all-users-id.js";
-import { UserData } from "../models/user.model.js";
 
 /**
  * @param {string}listName
@@ -44,7 +44,7 @@ export const addNewUserToDataBase = async (listName, usersData) => {
 
   for (const user of usersData) {
     if (!compareUsers.has(user.userId)) {
-      newUsers.push(user.getUserData());
+      newUsers.push(user);
     }
   }
 
