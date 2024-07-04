@@ -1,5 +1,6 @@
 // @ts-check
 /// <reference path="./src/types/model-data-parser.js" />
+/// <reference path="./src/types/user-data.type.js" />
 
 "use strict";
 
@@ -18,10 +19,22 @@ import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
 import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
 import { PROXY } from "./src/const/proxy.js";
-import { UserData } from "./src/models/user.model.js";
-import { getUserMeta } from "./src/utils/get-user-model.js";
 import { getTags } from "./src/api/get-tags.js";
 import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
+
+import {
+  getModel,
+  addModel,
+  getModelsValue,
+  getModelsSize,
+} from "./src/store/models.state.js";
+
+import {
+  getUserHandle,
+  addUserHandle,
+  getUsersHandleSize,
+  getUsersHandleKeys,
+} from "./src/store/user-handles.state.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,16 +54,10 @@ let WORKERS_COUNTER = 40;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = false;
+const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
-
-/** @type {Map<string, ModelDataPars>} */
-const MODELS = new Map();
-
-/** @type {Map<string, string[]>} */
-const USERS_HANDLES = new Map();
 
 /** @type {Array<UserData>} */
 const USERS = [];
@@ -117,10 +124,10 @@ const models = async (page) => {
 
   if (modelsResponse) {
     for (const model of modelsResponse.creators) {
-      if (model.guid && !MODELS.has(model.guid)) {
+      if (model.guid && !getModel(model.guid)) {
         const { guid, id } = model;
 
-        MODELS.set(guid, { id, guid, tags: [] });
+        addModel(guid, { id, guid, tags: [] });
       }
     }
   }
@@ -137,7 +144,7 @@ const models = async (page) => {
 };
 
 const tags = async () => {
-  const modelsChunk = chunkArray(Array.from(MODELS.values()), 100);
+  const modelsChunk = chunkArray(getModelsValue(), 100);
 
   for (const models of modelsChunk) {
     await /** @type {Promise<void>} */ (
@@ -151,7 +158,7 @@ const tags = async () => {
                 return;
               }
 
-              const modelMutate = MODELS.get(guid);
+              const modelMutate = getModel(guid);
 
               if (modelMutate === undefined) {
                 return;
@@ -187,10 +194,10 @@ const users = async (modalId, next) => {
       if (user.handle) {
         const handle = user.handle;
 
-        const userHandle = USERS_HANDLES.get(handle);
+        const userHandle = getUserHandle(handle);
 
         if (userHandle === undefined) {
-          USERS_HANDLES.set(handle, [modalId]);
+          addUserHandle(handle, [modalId]);
         } else {
           userHandle.push(modalId);
         }
@@ -198,7 +205,7 @@ const users = async (modalId, next) => {
     });
   }
 
-  if (USERS_HANDLES.size >= MAX_LENGTH) {
+  if (getUsersHandleSize() >= MAX_LENGTH) {
     return;
   }
 
@@ -213,10 +220,14 @@ const users = async (modalId, next) => {
  * @returns {void}
  */
 const worker = (meta, proxy) => {
+  console.log(getUsersHandleSize());
+
   const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
+
+    console.log(dataFromChild);
 
     if (dataFromChild.startsWith("[ERROR FROM CHILD]")) {
       console.log("[ERROR FROM CHILD]", dataFromChild);
@@ -231,29 +242,7 @@ const worker = (meta, proxy) => {
     /** @type {string} */
     const userMeta = dataFromChild.split("[DATA FROM CHILD]")[1];
 
-    const { userId, username, avatar_url, status } = getUserMeta(userMeta);
-
-    const user = new UserData(userId, username, status, avatar_url);
-
-    const modelsIdList = USERS_HANDLES.get(meta);
-
-    if (modelsIdList === undefined) {
-      return;
-    }
-
-    for (const modelId of modelsIdList) {
-      const model = MODELS.get(modelId);
-
-      if (model === undefined) {
-        return;
-      }
-
-      for (const { label } of model.tags) {
-        user.addTag(label);
-      }
-    }
-
-    USERS.push(user);
+    USERS.push(JSON.parse(userMeta));
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -282,7 +271,7 @@ const finallyAction = () => {
   END = Date.now();
 
   const info = {
-    all: USERS_HANDLES.size,
+    all: getUsersHandleSize(),
     active: USERS.length,
     time: formatMilliseconds(END - START),
   };
@@ -293,8 +282,6 @@ const finallyAction = () => {
   );
 
   if (TEST) {
-    console.log(USERS, false, null, true);
-
     process.exit(0);
   } else {
     addNewUserToDataBase(`NEW_USERS_PARSER${new Date(Date.now())}`, USERS)
@@ -360,11 +347,11 @@ const usersPars = async () => {
 
   await models(0);
 
-  console.log("[MODELS_PARSER_END]", MODELS.size);
+  console.log("[MODELS_PARSER_END]", getModelsSize());
 
   await tags();
 
-  const chunksModels = chunkArray(Array.from(MODELS.values()), 100);
+  const chunksModels = chunkArray(getModelsValue(), 100);
 
   console.log("[USERS_META_PARSER_START]");
 
@@ -389,23 +376,23 @@ const usersPars = async () => {
   END = Date.now();
 
   const handlesInfo = {
-    modals: MODELS.size,
-    handles: USERS_HANDLES.size,
+    modals: getModelsSize(),
+    handles: getUsersHandleSize(),
     time: formatMilliseconds(END - START),
   };
 
   console.dir(handlesInfo);
 
   save(
-    `${JSON.stringify(
-      Array.from(USERS_HANDLES.keys())
-    )}ParsInfo:${JSON.stringify(handlesInfo)}`,
+    `${JSON.stringify(getUsersHandleKeys())}ParsInfo:${JSON.stringify(
+      handlesInfo
+    )}`,
     path.join(__dirname, "output/meta.txt")
   );
 
   console.log("USERS_PARSER_START");
 
-  for (const handle of Array.from(USERS_HANDLES.keys())) {
+  for (const handle of getUsersHandleKeys()) {
     USERS_META_CACHE.push(handle);
   }
 

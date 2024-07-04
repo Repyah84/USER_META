@@ -1,11 +1,11 @@
 // @ts-check
 /// <reference path="../types/add-tags-request.type.js" />
+/// <reference path="../types/user-data.type.js" />
 
 "use strict";
 
 import { addTags } from "../api/add-tags.js";
 import { login } from "../api/login.js";
-import { UserData } from "../models/user.model.js";
 import { chunkArray } from "../utils/split-to-chunks.js";
 
 /**
@@ -16,7 +16,7 @@ export const addTagsToDataBase = async (users) => {
   /**@type {Array<UserWithTags>} */
   const usersIdsWithTags = users.map((user) => ({
     userId: user.userId,
-    tags: user.getTags(),
+    tags: user.tags,
   }));
 
   const usersIdsWithTagsChunk = chunkArray(usersIdsWithTags, 10000);
