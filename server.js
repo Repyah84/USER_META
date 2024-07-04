@@ -113,9 +113,7 @@ const initProxy = async (proxyList) => {
  * @returns
  */
 const models = async (page) => {
-  const proxy = getProxy();
-
-  const modelsResponse = await getModels(page, proxy);
+  const modelsResponse = await getModels(page);
 
   if (modelsResponse) {
     for (const model of modelsResponse.creators) {
@@ -164,8 +162,6 @@ const tags = async () => {
                 return;
               }
 
-              console.log(tags.data);
-
               for (const tag of tags.data) {
                 modelMutate.tags.push(tag);
               }
@@ -194,8 +190,6 @@ const users = async (modalId, next) => {
   const usersResponse = await getUsers(modalId, proxy, next);
 
   if (usersResponse?.success?.users) {
-    console.log(usersResponse.success.users);
-
     usersResponse.success.users.forEach((user) => {
       if (user.handle) {
         const handle = user.handle;
@@ -375,7 +369,11 @@ const usersPars = async () => {
 
   console.log("[MODELS_PARSER_END]", MODELS.size);
 
+  console.log("[TAGS_PARSER_START]");
+
   await tags();
+
+  console.log("[TAGS_PARSER_END]");
 
   const chunksModels = chunkArray(
     Array.from(MODELS.values()),
