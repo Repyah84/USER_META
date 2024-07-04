@@ -2,6 +2,7 @@
 
 "use strict";
 
+import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch, { AbortError } from "node-fetch";
 
 /**
@@ -13,9 +14,12 @@ import fetch, { AbortError } from "node-fetch";
  * }} ResponseData
  * @param {string | undefined} next
  * @param {string} modalId
+ * @param {string} proxyData
  * @returns {Promise< ResponseData| null> }
  */
-export const getUsers = async (modalId, next) => {
+export const getUsers = async (modalId, proxyData, next) => {
+  const agent = new HttpsProxyAgent(`http://${proxyData}`);
+
   const AbortController = globalThis.AbortController;
 
   const controller = new AbortController();
@@ -51,6 +55,7 @@ export const getUsers = async (modalId, next) => {
         body: null,
         method: "GET",
         signal: controller.signal,
+        agent,
       }
     );
 

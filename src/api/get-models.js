@@ -3,9 +3,10 @@
 
 "use strict";
 
-import fetch from "node-fetch";
+import fetch, { AbortError } from "node-fetch";
 
 import { SIZE } from "../const/size.js";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 /**
  * @typedef {{
@@ -14,9 +15,20 @@ import { SIZE } from "../const/size.js";
  *      totalPages: number
  * }} ResponseData
  * @param {number} page
+ * @param {string} proxyData
  * @returns {Promise<ResponseData| null>}
  */
-export const getModels = async (page) => {
+export const getModels = async (page, proxyData) => {
+  const agent = new HttpsProxyAgent(`http://${proxyData}`);
+
+  const AbortController = globalThis.AbortController;
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 10000);
+
   try {
     const response = await fetch(
       `https://www.manyvids.com/bff/search/creators/list?sort=followers&contentPref=1%252C2%252C3&contentType=1&from=${
@@ -41,6 +53,7 @@ export const getModels = async (page) => {
         },
         body: null,
         method: "GET",
+        agent,
       }
     );
 
@@ -50,8 +63,14 @@ export const getModels = async (page) => {
 
     return await /** @type {Promise<ResponseData>} */ (response.json());
   } catch (error) {
-    console.log(error);
+    if (error instanceof AbortError) {
+      console.log("request was aborted");
+    } else {
+      console.log(error);
+    }
 
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 };

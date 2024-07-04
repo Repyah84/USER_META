@@ -3,20 +3,24 @@
 
 "use strict";
 
+import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch, { AbortError } from "node-fetch";
 
 /**
  * @param {string} modalIdShort
+ * @param {string} proxyData
  * @returns {Promise<{data: Tag[]} | null>}
  */
-export const getTags = async (modalIdShort) => {
+export const getTags = async (modalIdShort, proxyData) => {
+  const agent = new HttpsProxyAgent(`http://${proxyData}`);
+
   const AbortController = globalThis.AbortController;
 
   const controller = new AbortController();
 
   const timeout = setTimeout(() => {
     controller.abort();
-  }, 5000);
+  }, 10000);
 
   try {
     const response = await fetch(
@@ -41,6 +45,7 @@ export const getTags = async (modalIdShort) => {
         body: null,
         method: "GET",
         signal: controller.signal,
+        agent,
       }
     );
 

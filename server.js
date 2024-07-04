@@ -113,7 +113,9 @@ const initProxy = async (proxyList) => {
  * @returns
  */
 const models = async (page) => {
-  const modelsResponse = await getModels(page);
+  const proxy = getProxy();
+
+  const modelsResponse = await getModels(page, proxy);
 
   if (modelsResponse) {
     for (const model of modelsResponse.creators) {
@@ -137,7 +139,10 @@ const models = async (page) => {
 };
 
 const tags = async () => {
-  const modelsChunk = chunkArray(Array.from(MODELS.values()), 100);
+  const modelsChunk = chunkArray(
+    Array.from(MODELS.values()),
+    PROXY_META.length
+  );
 
   for (const models of modelsChunk) {
     await /** @type {Promise<void>} */ (
@@ -145,7 +150,9 @@ const tags = async () => {
         let index = 0;
 
         for (const { guid, id } of models) {
-          getTags(id)
+          const proxy = getProxy();
+
+          getTags(id, proxy)
             .then((tags) => {
               if (tags === null) {
                 return;
@@ -156,6 +163,8 @@ const tags = async () => {
               if (modelMutate === undefined) {
                 return;
               }
+
+              console.log(tags.data);
 
               for (const tag of tags.data) {
                 modelMutate.tags.push(tag);
@@ -180,9 +189,13 @@ const tags = async () => {
  * @returns {Promise<void>}
  */
 const users = async (modalId, next) => {
-  const usersResponse = await getUsers(modalId, next);
+  const proxy = getProxy();
+
+  const usersResponse = await getUsers(modalId, proxy, next);
 
   if (usersResponse?.success?.users) {
+    console.log(usersResponse.success.users);
+
     usersResponse.success.users.forEach((user) => {
       if (user.handle) {
         const handle = user.handle;
@@ -364,7 +377,10 @@ const usersPars = async () => {
 
   await tags();
 
-  const chunksModels = chunkArray(Array.from(MODELS.values()), 100);
+  const chunksModels = chunkArray(
+    Array.from(MODELS.values()),
+    PROXY_META.length
+  );
 
   console.log("[USERS_META_PARSER_START]");
 
