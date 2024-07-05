@@ -64,7 +64,7 @@ let WORKERS_COUNTER = 40;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
