@@ -2,7 +2,7 @@
 
 "use strict";
 
-import { UserData } from "../models/user.model";
+import { UserData } from "../models/user.model.js";
 
 /**@type {Map<string, UserData>} */
 const usersState = new Map();
