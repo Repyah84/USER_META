@@ -1,5 +1,6 @@
 // @ts-check
 /// <reference path="./src/types/user-data.type.js" />
+/// <reference path="./src/types/parser-dto.type.js" />
 
 "use strict";
 
@@ -7,64 +8,72 @@ import { getUser } from "./src/api/get-user.js";
 import { findUserMeta } from "./src/utils/find-user-meta.js";
 import { getUserMeta } from "./src/utils/get-user-model.js";
 
-import { getModel } from "./src/store/models.state.js";
+process.stdin.setEncoding("utf8");
 
-import { getUserHandle } from "./src/store/user-handles.state.js";
+let input = "";
 
-setTimeout(async () => {
-  try {
-    const [userMeta, proxy] = process.argv.slice(2);
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+});
 
-    const userMetaResponse = await getUser(userMeta, proxy);
+process.stdin.on("end", () => {
+  setTimeout(async () => {
+    try {
+      /**@type {ParserDTO} */
+      const { userMeta, proxy, modelsIdList, modelsDada } = JSON.parse(input);
 
-    if (!userMetaResponse) {
-      return;
-    }
-
-    const meta = findUserMeta(userMetaResponse);
-
-    if (meta === null) {
-      return;
-    }
-
-    const { userId, username, avatar_url, status } = getUserMeta(meta);
-
-    /**@type {Set<string>} */
-    const tags = new Set();
-
-    const modelsIdList = getUserHandle(userMeta);
-
-    // console.log("PARSER", modelsIdList);
-
-    if (modelsIdList === undefined) {
-      return;
-    }
-
-    for (const modelId of modelsIdList) {
-      const modelData = getModel(modelId);
-
-      if (modelData === undefined) {
+      if (modelsIdList === undefined) {
         return;
       }
 
-      for (const { label } of modelData.tags) {
-        tags.add(label);
+      const userMetaResponse = await getUser(userMeta, proxy);
+
+      if (!userMetaResponse) {
+        return;
       }
+
+      const meta = findUserMeta(userMetaResponse);
+
+      if (meta === null) {
+        return;
+      }
+
+      const { userId, username, avatar_url, status } = getUserMeta(meta);
+
+      /**@type {Set<string>} */
+      const tags = new Set();
+
+      /**@type {Map<string, ModelDataPars>} */
+      const data = new Map();
+
+      for (const modelData of modelsDada) {
+        data.set(modelData.guid, modelData);
+      }
+
+      for (const modelId of modelsIdList) {
+        const modelData = data.get(modelId);
+
+        if (modelData !== undefined) {
+          for (const { label } of modelData.tags) {
+            tags.add(label);
+          }
+        }
+      }
+
+      /**@type {UserData} */
+      const user = {
+        userId,
+        username,
+        avatar_url,
+        status,
+        tags: Array.from(tags.values()),
+      };
+
+      process.stdout.write(`[DATA FROM CHILD]${JSON.stringify(user)}`);
+    } catch (error) {
+      console.log(`[ERROR FROM CHILD]${error}`);
+    } finally {
+      process.exit(0);
     }
-
-    /**@type {UserData} */
-    const user = {
-      userId,
-      username,
-      avatar_url,
-      status,
-      tags: Array.from(tags.values()),
-    };
-
-    process.stdout.write(`[DATA FROM CHILD]${JSON.stringify(user)}`);
-  } catch (error) {
-    console.log(`[ERROR FROM CHILD]${error}`);
-  } finally {
-    process.exit(0);
-  }
-}, 1000);
+  }, 1000);
+});
