@@ -1,6 +1,7 @@
 // @ts-check
 /// <reference path="./src/types/model-data-parser.js" />
 /// <reference path="./src/types/user-data.type.js" />
+/// <reference path="./src/types/parser-dto.type.js" />
 
 "use strict";
 
@@ -215,19 +216,29 @@ const users = async (modalId, next) => {
 };
 
 /**
- * @param {string} meta
+ * @param {string} userMeta
  * @param {string} proxy
  * @returns {void}
  */
-const worker = (meta, proxy) => {
-  console.log(getUsersHandleSize());
+const worker = (userMeta, proxy) => {
+  /**@type {ParserDTO} */
+  const input = {
+    userMeta,
+    proxy,
+    modelsIdList: getUserHandle(userMeta),
+    modelsDada: getModelsValue(),
+  };
 
-  const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
+  const childProcess = spawn("node", ["parser.js"], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  childProcess.stdin.write(JSON.stringify(input));
+
+  childProcess.stdin.end();
 
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
-
-    console.log(dataFromChild);
 
     if (dataFromChild.startsWith("[ERROR FROM CHILD]")) {
       console.log("[ERROR FROM CHILD]", dataFromChild);
@@ -241,6 +252,8 @@ const worker = (meta, proxy) => {
 
     /** @type {string} */
     const userMeta = dataFromChild.split("[DATA FROM CHILD]")[1];
+
+    console.dir(JSON.parse(userMeta).userId);
 
     USERS.push(JSON.parse(userMeta));
   });
@@ -349,7 +362,16 @@ const usersPars = async () => {
 
   console.log("[MODELS_PARSER_END]", getModelsSize());
 
+  console.log("[TAGS_PARSER_START]");
+
   await tags();
+
+  console.log("[TAGS_PARSER_END]");
+
+  saveSync(
+    `${JSON.stringify(getModelsValue())}[LENGTH]:${getModelsSize()}`,
+    path.join(__dirname, "output/models.txt")
+  );
 
   const chunksModels = chunkArray(getModelsValue(), 100);
 
