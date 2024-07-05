@@ -1,14 +1,14 @@
 // @ts-check
-/// <reference path="../types/model-data-parser.js" />
+/// <reference path="../types/model.type.js" />
 
 "use strict";
 
-/** @type {Map<string, ModelDataPars>} */
+/** @type {Map<string, Model>} */
 const models = new Map();
 
 /**
  * @param {string} key
- * @param {ModelDataPars} data
+ * @param {Model} data
  * @returns {void}
  */
 const addModel = (key, data) => {
@@ -17,14 +17,14 @@ const addModel = (key, data) => {
 
 /**
  * @param {string} key
- * @returns {ModelDataPars | undefined}
+ * @returns {Model | undefined}
  */
 const getModel = (key) => {
   return models.get(key);
 };
 
 /**
- * @returns {Array<ModelDataPars>}
+ * @returns {Array<Model>}
  */
 const getModelsValue = () => {
   return Array.from(models.values());

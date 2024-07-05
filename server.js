@@ -1,7 +1,6 @@
 // @ts-check
-/// <reference path="./src/types/model-data-parser.js" />
-/// <reference path="./src/types/user-data.type.js" />
 /// <reference path="./src/types/parser-dto.type.js" />
+/// <reference path="./src/types/user.type.js" />
 
 "use strict";
 
@@ -37,6 +36,16 @@ import {
   getUsersHandleKeys,
 } from "./src/store/user-handles.state.js";
 
+import {
+  getUsersValues,
+  addUserToState,
+  getUsersSize,
+  usersState,
+} from "./src/store/user.state.js";
+
+import { addTag, getTag } from "./src/store/tags.state.js";
+import { UserData } from "./src/models/user.model.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -59,9 +68,6 @@ const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
-
-/** @type {Array<UserData>} */
-const USERS = [];
 
 /** @type {Array<string>} */
 const USERS_META_CACHE = [];
@@ -123,12 +129,12 @@ const initProxy = async (proxyList) => {
 const models = async (page) => {
   const modelsResponse = await getModels(page);
 
-  if (modelsResponse) {
+  if (modelsResponse !== null) {
     for (const model of modelsResponse.creators) {
       if (model.guid && !getModel(model.guid)) {
         const { guid, id } = model;
 
-        addModel(guid, { id, guid, tags: [] });
+        addModel(guid, { id, guid });
       }
     }
   }
@@ -145,14 +151,14 @@ const models = async (page) => {
 };
 
 const tags = async () => {
-  const modelsChunk = chunkArray(getModelsValue(), 100);
+  const modelsChunk = chunkArray(getModelsValue(), PROXY_META.length);
 
   for (const models of modelsChunk) {
     await /** @type {Promise<void>} */ (
       new Promise((resolve) => {
         let index = 0;
 
-        for (const { guid, id } of models) {
+        for (const { id, guid } of models) {
           const proxy = getProxy();
 
           getTags(id, proxy)
@@ -161,15 +167,7 @@ const tags = async () => {
                 return;
               }
 
-              const modelMutate = getModel(guid);
-
-              if (modelMutate === undefined) {
-                return;
-              }
-
-              for (const tag of tags.data) {
-                modelMutate.tags.push(tag);
-              }
+              addTag(guid, tags.data);
             })
             .finally(() => {
               index++;
@@ -218,26 +216,12 @@ const users = async (modalId, next) => {
 };
 
 /**
- * @param {string} userMeta
+ * @param {string} meta
  * @param {string} proxy
  * @returns {void}
  */
-const worker = (userMeta, proxy) => {
-  /**@type {ParserDTO} */
-  const input = {
-    userMeta,
-    proxy,
-    modelsIdList: getUserHandle(userMeta),
-    modelsDada: getModelsValue(),
-  };
-
-  const childProcess = spawn("node", ["parser.js"], {
-    stdio: ["pipe", "pipe", "pipe"],
-  });
-
-  childProcess.stdin.write(JSON.stringify(input));
-
-  childProcess.stdin.end();
+const worker = (meta, proxy) => {
+  const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
@@ -252,10 +236,13 @@ const worker = (userMeta, proxy) => {
       return;
     }
 
-    /** @type {string} */
-    const userMeta = dataFromChild.split("[DATA FROM CHILD]")[1];
+    /**@type {string} */
+    const userSt = dataFromChild.split("[DATA FROM CHILD]")[1];
 
-    USERS.push(JSON.parse(userMeta));
+    /**@type {User} */
+    const { userId, status, username, avatar_url } = JSON.parse(userSt);
+
+    addUserToState(meta, new UserData(userId, username, status, avatar_url));
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -285,21 +272,40 @@ const finallyAction = () => {
 
   const info = {
     all: getUsersHandleSize(),
-    active: USERS.length,
+    active: getUsersSize(),
     time: formatMilliseconds(END - START),
   };
 
+  for (const [key, userData] of usersState) {
+    const modelsId = getUserHandle(key);
+
+    if (modelsId !== undefined) {
+      for (const modelId of modelsId) {
+        const tags = getTag(modelId);
+
+        if (tags !== undefined) {
+          for (const { label } of tags) {
+            userData.addTag(label);
+          }
+        }
+      }
+    }
+  }
+
   saveSync(
-    `${JSON.stringify(USERS)}ParsInfo:${JSON.stringify(info)}`,
+    `${JSON.stringify(getUsersValues())}ParsInfo:${JSON.stringify(info)}`,
     path.join(__dirname, "output/users.txt")
   );
 
   if (TEST) {
     process.exit(0);
   } else {
-    addNewUserToDataBase(`NEW_USERS_PARSER${new Date(Date.now())}`, USERS)
+    addNewUserToDataBase(
+      `NEW_USERS_PARSER${new Date(Date.now())}`,
+      getUsersValues()
+    )
       .then(() => {
-        return addTagsToDataBase(USERS);
+        return addTagsToDataBase(getUsersValues());
       })
       .finally(() => {
         console.log("Data is saved to data base");
