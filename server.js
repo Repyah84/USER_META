@@ -55,7 +55,7 @@ let WORKERS_COUNTER = 40;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 20 : Infinity;
@@ -190,9 +190,7 @@ const tags = async () => {
  * @returns {Promise<void>}
  */
 const users = async (modalId, next) => {
-  const proxy = getProxy();
-
-  const usersResponse = await getUsers(modalId, proxy, next);
+  const usersResponse = await getUsers(modalId, next);
 
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {
@@ -256,8 +254,6 @@ const worker = (userMeta, proxy) => {
 
     /** @type {string} */
     const userMeta = dataFromChild.split("[DATA FROM CHILD]")[1];
-
-    console.dir(JSON.parse(userMeta).userId);
 
     USERS.push(JSON.parse(userMeta));
   });
