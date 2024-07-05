@@ -42,9 +42,9 @@ export const addNewUserToDataBase = async (listName, usersData) => {
     compareUsers.add(id);
   }
 
-  for (const user of usersData) {
-    if (!compareUsers.has(user.userId)) {
-      newUsers.push(user);
+  for (const userData of usersData) {
+    if (!compareUsers.has(userData.userId)) {
+      newUsers.push(userData.getUserData());
     }
   }
 
@@ -62,7 +62,7 @@ export const addNewUserToDataBase = async (listName, usersData) => {
 
   const { listId } = list;
 
-  const usersModelList = chunkArray(newUsers, 1000);
+  const usersModelList = chunkArray(newUsers, 10000);
 
   for (const usersModel of usersModelList) {
     const userIds = usersModel.map(({ userId }) => userId);
