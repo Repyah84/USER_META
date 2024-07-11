@@ -58,7 +58,7 @@ let START = 0;
 let END = 0;
 
 /** @type {number} */
-let WORKERS_COUNTER = 40;
+let WORKERS_COUNTER = 50;
 
 /** @type {null | NodeJS.Timeout} */
 let INTERVAL = null;
