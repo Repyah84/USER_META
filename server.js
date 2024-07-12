@@ -123,6 +123,47 @@ const initProxy = async (proxyList) => {
 };
 
 /**
+ * @param {[string, UserData][]} chunk
+ * @returns {Promise<void>}
+ */
+const processUsersData = async (chunk) => {
+  for (const [key, userData] of chunk) {
+    const modelsId = getUserHandle(key);
+
+    if (modelsId !== undefined) {
+      for (const modelId of modelsId) {
+        const tags = getTag(modelId);
+
+        if (tags !== undefined) {
+          for (const { label } of tags) {
+            userData.addTag(label);
+          }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * @param {Map<string, UserData>} users
+ * @param {number} chunkSize
+ * @returns {Promise<void>}
+ */
+const processUserDadaBunches = async (users, chunkSize) => {
+  const entries = Array.from(users.entries());
+  const totalChunks = Math.ceil(entries.length / chunkSize);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * chunkSize;
+    const end = Math.min(start + chunkSize, entries.length);
+
+    const chunk = entries.slice(start, end);
+
+    await processUsersData(chunk);
+  }
+};
+
+/**
  * @param {number} page
  * @returns
  */
@@ -276,43 +317,27 @@ const finallyAction = () => {
     time: formatMilliseconds(END - START),
   };
 
-  for (const [key, userData] of usersState) {
-    const modelsId = getUserHandle(key);
+  processUserDadaBunches(usersState, 1000).then(() => {
+    saveSync(
+      `${JSON.stringify(getUsersValues())}ParsInfo:${JSON.stringify(info)}`,
+      path.join(__dirname, "output/users.txt")
+    );
 
-    if (modelsId !== undefined) {
-      for (const modelId of modelsId) {
-        const tags = getTag(modelId);
+    if (TEST) {
+      process.exit(0);
+    } else {
+      addNewUserToDataBase(
+        `NEW_USERS_PARSER${new Date(Date.now())}`,
+        getUsersValues()
+      ).then(() => {
+        addTagsToDataBase(getUsersValues()).finally(() => {
+          console.log("Data is saved to data base");
 
-        if (tags !== undefined) {
-          for (const { label } of tags) {
-            userData.addTag(label);
-          }
-        }
-      }
-    }
-  }
-
-  saveSync(
-    `${JSON.stringify(getUsersValues())}ParsInfo:${JSON.stringify(info)}`,
-    path.join(__dirname, "output/users.txt")
-  );
-
-  if (TEST) {
-    process.exit(0);
-  } else {
-    addNewUserToDataBase(
-      `NEW_USERS_PARSER${new Date(Date.now())}`,
-      getUsersValues()
-    )
-      .then(() => {
-        return addTagsToDataBase(getUsersValues());
-      })
-      .finally(() => {
-        console.log("Data is saved to data base");
-
-        process.exit(0);
+          process.exit(0);
+        });
       });
-  }
+    }
+  });
 };
 
 /**
