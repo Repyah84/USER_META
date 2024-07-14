@@ -37,4 +37,11 @@ const getModelsSize = () => {
   return getModelsValue().length;
 };
 
-export { addModel, getModel, getModelsValue, getModelsSize };
+/**
+ * @returns {[string, Model][]}
+ */
+const getModelEntries = () => {
+  return Array.from(models.entries());
+};
+
+export { addModel, getModel, getModelsValue, getModelsSize, getModelEntries };

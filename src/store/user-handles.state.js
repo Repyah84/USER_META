@@ -43,10 +43,18 @@ const getUsersHandleSize = () => {
   return getUsersHandleValue().length;
 };
 
+/**
+ * @returns {[string, string[]][]}
+ */
+const getUsersHandleEntries = () => {
+  return Array.from(userHandles.entries());
+};
+
 export {
   addUserHandle,
   getUserHandle,
   getUsersHandleValue,
   getUsersHandleSize,
   getUsersHandleKeys,
+  getUsersHandleEntries,
 };

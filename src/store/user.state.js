@@ -45,11 +45,18 @@ const getUsersKeys = () => {
   return Array.from(usersState.keys());
 };
 
+/**
+ * @returns {[string, UserData][]}
+ */
+const getUsersEntries = () => {
+  return Array.from(usersState.entries());
+};
+
 export {
   addUserToState,
   getUserState,
   getUsersKeys,
   getUsersValues,
   getUsersSize,
-  usersState,
+  getUsersEntries,
 };

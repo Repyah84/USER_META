@@ -1,9 +1,10 @@
 // @ts-check
+///<reference path="../types/tag.type.js" />
 
 "use strict";
 
 /** @type {Map<string, Tag[]>} */
-const userHandles = new Map();
+const tags = new Map();
 
 /**
  * @param {string} key
@@ -11,7 +12,7 @@ const userHandles = new Map();
  * @returns {void}
  */
 const addTag = (key, data) => {
-  userHandles.set(key, data);
+  tags.set(key, data);
 };
 
 /**
@@ -19,21 +20,21 @@ const addTag = (key, data) => {
  * @returns {Tag[] | undefined}
  */
 const getTag = (key) => {
-  return userHandles.get(key);
+  return tags.get(key);
 };
 
 /**
  * @returns {Array<Tag[]>}
  */
 const getTagsValue = () => {
-  return Array.from(userHandles.values());
+  return Array.from(tags.values());
 };
 
 /**
  * @returns {Array<string>}
  */
 const getTagsKeys = () => {
-  return Array.from(userHandles.keys());
+  return Array.from(tags.keys());
 };
 
 /**
@@ -43,4 +44,18 @@ const getTagsSize = () => {
   return getTagsValue().length;
 };
 
-export { addTag, getTag, getTagsValue, getTagsSize, getTagsKeys };
+/**
+ * @returns {[string, Tag[]][]}
+ */
+const getTagsEntries = () => {
+  return Array.from(tags.entries());
+};
+
+export {
+  addTag,
+  getTag,
+  getTagsValue,
+  getTagsSize,
+  getTagsKeys,
+  getTagsEntries,
+};
