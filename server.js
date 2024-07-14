@@ -77,7 +77,7 @@ const TEST = true;
 const USERS_DATA_PARS_CHUNKS = [];
 
 /** @type {number} */
-const MAX_LENGTH = TEST ? 500 : Infinity;
+const MAX_LENGTH = TEST ? 2000 : Infinity;
 
 /** @type {Array<string>} */
 const USERS_META_CACHE = [];
