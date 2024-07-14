@@ -71,13 +71,13 @@ let WORKERS_COUNTER = 50;
 let INTERVAL = null;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {[string, UserData][][]} */
 const USERS_DATA_PARS_CHUNKS = [];
 
 /** @type {number} */
-const MAX_LENGTH = TEST ? 10000 : Infinity;
+const MAX_LENGTH = TEST ? 1000 : Infinity;
 
 /** @type {Array<string>} */
 const USERS_META_CACHE = [];
@@ -242,7 +242,11 @@ async function tags() {
  */
 async function saveDataToBack() {
   if (TEST) {
-    console.log("complite");
+    for (const user of getUsersValues()) {
+      console.log(user.getTags());
+    }
+
+    console.log("Parser run successfully");
   } else {
     const users = getUsersValues();
 
