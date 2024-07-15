@@ -73,7 +73,7 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 
     const users = chunkArray(getUsersEntries(), 10000)[index];
 
-    if (index === users.length - 1) {
+    if (users === undefined) {
       process.stdout.write("[DATA FROM CHILD STOP SESSION]");
 
       return;
@@ -126,5 +126,5 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 /**
  * @typedef {Object} ModelsDataFromFile
  * @property {[string, Model][]} models
- * @property {number} number
+ * @property {number} length
  */
