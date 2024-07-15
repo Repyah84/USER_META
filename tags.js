@@ -1,4 +1,7 @@
 // @ts-check
+///<reference path="./src/types/user.type.js" />
+///<reference path="./src/types/model.type.js" />
+///<reference path="./src/types/tag.type.js" />
 
 "use strict";
 
