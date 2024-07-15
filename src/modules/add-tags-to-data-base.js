@@ -18,8 +18,6 @@ export const addTagsToDataBase = async (users) => {
     tags: user.getTags(),
   }));
 
-  console.log(usersIdsWithTags[0].tags);
-
   try {
     const auth = await login({ password: "admin", username: "admin" });
 
