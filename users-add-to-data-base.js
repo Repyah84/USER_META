@@ -37,5 +37,5 @@ import { readFile } from "./src/modules/read.js";
 /**
  * @typedef {Object} UserDataFromFile
  * @property {[string, User][]} users
- * @property {length} number
+ * @property {number} length
  */

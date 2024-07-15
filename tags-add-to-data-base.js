@@ -5,35 +5,50 @@
 import { spawn } from "node:child_process";
 import EventEmitter from "node:events";
 
-(() => {
-  /**@type {number} */
-  const INDEX = 0;
+const tagsAddToDateBase = new EventEmitter();
 
-  const tagsAddToDateBase = new EventEmitter();
+/**@type {number} */
+let INDEX = 0;
 
-  function worker() {
-    const childProcess = spawn("node", ["tags.js", `${INDEX}`]);
+/**
+ * @param {number} index
+ */
+function worker(index) {
+  const childProcess = spawn("node", ["tags.js", `${index}`]);
 
-    childProcess.stdout.on("data", (data) => {
-      const dataFromChild = data.toString();
+  childProcess.stdout.on("data", (data) => {
+    const dataFromChild = data.toString();
 
-      console.log(dataFromChild);
-    });
+    console.log(dataFromChild);
 
-    childProcess.stderr.on("data", (data) => {
-      console.error(`[PARENT] stderr from child: ${data}`);
+    if (dataFromChild === "[DATA FROM CHILD STOP SESSION]") {
+      console.log("SESSION COMPLITE");
 
-      tagsAddToDateBase.emit("tags");
-    });
+      process.exit(0);
+    }
+  });
 
-    childProcess.on("close", () => {
-      tagsAddToDateBase.emit("tags");
-    });
+  childProcess.stderr.on("data", (data) => {
+    console.error(`[PARENT] stderr from child: ${data}`);
 
-    childProcess.on("error", (err) => {
-      console.error(`[PARENT] Error spawning child process: ${err}`);
+    tagsAddToDateBase.emit("tags");
+  });
 
-      tagsAddToDateBase.emit("tags");
-    });
-  }
-})();
+  childProcess.on("close", () => {
+    tagsAddToDateBase.emit("tags");
+  });
+
+  childProcess.on("error", (err) => {
+    console.error(`[PARENT] Error spawning child process: ${err}`);
+
+    tagsAddToDateBase.emit("tags");
+  });
+}
+
+tagsAddToDateBase.on("tags", () => {
+  INDEX++;
+
+  worker(INDEX);
+});
+
+worker(INDEX);
