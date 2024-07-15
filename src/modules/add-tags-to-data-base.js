@@ -27,13 +27,6 @@ export const addTagsToDataBase = async (users) => {
 
     const { access_token, refresh_token } = auth;
 
-    console.log(
-      "USERS_LENGHT",
-      usersIdsWithTags.length,
-      "TAGS",
-      usersIdsWithTags[0].tags
-    );
-
     await addTags({ users: usersIdsWithTags }, access_token, refresh_token);
 
     return true;
