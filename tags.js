@@ -71,7 +71,11 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
       addUserToState(key, new UserData(userId, username, status, avatar_url));
     }
 
-    const users = chunkArray(getUsersEntries(), 10000)[index];
+    const usersChunks = chunkArray(getUsersEntries(), 10000);
+
+    console.log("LENGHT", usersChunks.length);
+
+    const users = usersChunks[index];
 
     if (users === undefined) {
       process.stdout.write("[DATA FROM CHILD STOP SESSION]");
