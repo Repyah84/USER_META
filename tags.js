@@ -76,7 +76,7 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 
     const usersChunks = chunkArray(getUsersEntries(), 10000);
 
-    console.log("LENGHT", usersChunks.length);
+    console.log("LENGTH", usersChunks.length);
 
     const users = usersChunks[index];
 

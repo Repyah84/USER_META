@@ -20,7 +20,6 @@ import { proxyIs } from "./src/modules/proxy-is.js";
 import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
 import { PROXY } from "./src/const/proxy.js";
 import { getTags } from "./src/api/get-tags.js";
-import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 
 import {
   getModel,
@@ -56,6 +55,8 @@ import { UserData } from "./src/models/user.model.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const tagsAddToDateBase = new EventEmitter();
+
 const userParserEvent = new EventEmitter();
 
 /** @type {number} */
@@ -70,11 +71,11 @@ let WORKERS_COUNTER = 50;
 /** @type {null | NodeJS.Timeout} */
 let INTERVAL = null;
 
+/**@type {number} */
+let TAGS_INDEX = 0;
+
 /** @type {boolean} */
 const TEST = false;
-
-/** @type {[string, UserData][][]} */
-const USERS_DATA_PARS_CHUNKS = [];
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 1000 : Infinity;
@@ -130,51 +131,6 @@ async function initProxy(proxyList) {
       PROXY_ROTTEN.push(proxy);
     }
   }
-}
-
-/**
- * @param {[string, UserData][]} chunk
- * @returns {void}
- */
-function processUsersData(chunk) {
-  console.log("chunk calculate");
-
-  for (const [key, userData] of chunk) {
-    const modelsId = getUserHandle(key);
-
-    if (modelsId !== undefined) {
-      for (const modelId of modelsId) {
-        const tags = getTag(modelId);
-
-        if (tags !== undefined) {
-          for (const { label } of tags) {
-            userData.addTag(label);
-          }
-        }
-      }
-    }
-  }
-}
-
-/**
- * @returns {void}
- */
-function processUserDadaBunches() {
-  if (USERS_DATA_PARS_CHUNKS.length === 0) {
-    saveDataToBack();
-
-    return;
-  }
-
-  const users = USERS_DATA_PARS_CHUNKS.shift();
-
-  if (users === undefined) {
-    return;
-  }
-
-  processUsersData(users);
-
-  userParserEvent.emit("userDataPars");
 }
 
 /**
@@ -238,29 +194,22 @@ async function tags() {
 }
 
 /**
+ * @returns {void}
+ */
+function addTagsToDataBase() {
+  tagsWorker(TAGS_INDEX);
+}
+
+/**
  * @returns {Promise<void>}
  */
-async function saveDataToBack() {
-  if (TEST) {
-    for (const user of getUsersValues()) {
-      console.log(user.getTags());
-    }
+async function saveNewUserDataToBack() {
+  await addNewUserToDataBase(
+    `NEW_USERS_PARSER${new Date(Date.now())}`,
+    getUsersValues()
+  );
 
-    console.log("Parser run successfully");
-  } else {
-    const users = getUsersValues();
-
-    await addNewUserToDataBase(
-      `NEW_USERS_PARSER${new Date(Date.now())}`,
-      users
-    );
-
-    await addTagsToDataBase(users);
-
-    console.log("Data is saved to data base");
-  }
-
-  process.exit(0);
+  console.log("Data is saved to data base");
 }
 
 /**
@@ -294,6 +243,42 @@ async function users(modalId, next) {
   if (usersResponse?.success?.next) {
     await users(modalId, usersResponse.success.next);
   }
+}
+
+/**
+ * @param {number} index
+ * @returns {void}
+ */
+function tagsWorker(index) {
+  const childProcess = spawn("node", ["tags.js", `${index}`]);
+
+  childProcess.stdout.on("data", (data) => {
+    const dataFromChild = data.toString();
+
+    console.log(dataFromChild);
+
+    if (dataFromChild === "[DATA FROM CHILD STOP SESSION]") {
+      console.log("SESSION COMPLETE");
+
+      process.exit(0);
+    }
+  });
+
+  childProcess.stderr.on("data", (data) => {
+    console.error(`[PARENT] stderr from child: ${data}`);
+
+    tagsAddToDateBase.emit("tags");
+  });
+
+  childProcess.on("close", () => {
+    tagsAddToDateBase.emit("tags");
+  });
+
+  childProcess.on("error", (err) => {
+    console.error(`[PARENT] Error spawning child process: ${err}`);
+
+    tagsAddToDateBase.emit("tags");
+  });
 }
 
 /**
@@ -344,9 +329,9 @@ function worker(meta, proxy) {
 }
 
 /**
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function finallyAction() {
+async function finallyAction() {
   stopMetric();
 
   END = Date.now();
@@ -359,16 +344,10 @@ function finallyAction() {
 
   console.dir(info);
 
-  /** @type {[string, User][]} */
-  const users = [];
-  /** @type {[string, UserData][]} */
-  const userDataPars = [];
-
-  for (const [key, user] of getUsersEntries()) {
-    users.push([key, user.getUserData()]);
-
-    userDataPars.push([key, user]);
-  }
+  const users = getUsersEntries().map(([key, user]) => [
+    key,
+    user.getUserData(),
+  ]);
 
   saveSync(
     JSON.stringify({
@@ -378,11 +357,15 @@ function finallyAction() {
     path.join(__dirname, "output/users.txt")
   );
 
-  for (const chunk of chunkArray(userDataPars, 1000)) {
-    USERS_DATA_PARS_CHUNKS.push(chunk);
+  if (TEST) {
+    console.log("Parser run successfully");
+
+    process.exit(0);
   }
 
-  processUserDadaBunches();
+  await saveNewUserDataToBack();
+
+  addTagsToDataBase();
 }
 
 /**
@@ -524,8 +507,10 @@ async function usersPars() {
   runMetric(USERS_META_CACHE);
 }
 
-userParserEvent.on("userDataPars", () => {
-  processUserDadaBunches();
+tagsAddToDateBase.on("tags", () => {
+  TAGS_INDEX++;
+
+  tagsWorker(TAGS_INDEX);
 });
 
 userParserEvent.on("parser", () => {

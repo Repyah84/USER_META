@@ -8,13 +8,10 @@ import EventEmitter from "node:events";
 const tagsAddToDateBase = new EventEmitter();
 
 /**@type {number} */
-let INDEX = 0;
+let TAGS_INDEX = 0;
 
-/**
- * @param {number} index
- */
-function worker(index) {
-  const childProcess = spawn("node", ["tags.js", `${index}`]);
+function tagsWorker() {
+  const childProcess = spawn("node", ["tags.js", `${TAGS_INDEX}`]);
 
   childProcess.stdout.on("data", (data) => {
     const dataFromChild = data.toString();
@@ -22,7 +19,7 @@ function worker(index) {
     console.log(dataFromChild);
 
     if (dataFromChild === "[DATA FROM CHILD STOP SESSION]") {
-      console.log("SESSION COMPLITE");
+      console.log("SESSION COMPLETE");
 
       process.exit(0);
     }
@@ -46,9 +43,9 @@ function worker(index) {
 }
 
 tagsAddToDateBase.on("tags", () => {
-  INDEX++;
+  TAGS_INDEX++;
 
-  worker(INDEX);
+  tagsWorker();
 });
 
-worker(INDEX);
+tagsWorker();
