@@ -1,4 +1,6 @@
 // @ts-check
+/// <reference path="./src/types/parser-dto.type.js" />
+/// <reference path="./src/types/user.type.js" />
 
 "use strict";
 
@@ -6,7 +8,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import EventEmitter from "node:events";
 
-import { addUsersToDataBase } from "./src/modules/add-users-to-data-base.js";
 import { spawn } from "node:child_process";
 
 import { getUsers } from "./src/api/get-users.js";
@@ -16,10 +17,45 @@ import { formatMilliseconds } from "./src/utils/time.js";
 import { getModels } from "./src/api/get-models.js";
 import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { proxyIs } from "./src/modules/proxy-is.js";
+import { addNewUserToDataBase } from "./src/modules/add-new-users-to-data-base.js";
 import { PROXY } from "./src/const/proxy.js";
+import { getTags } from "./src/api/get-tags.js";
+
+import {
+  getModel,
+  addModel,
+  getModelsValue,
+  getModelsSize,
+  getModelEntries,
+} from "./src/store/models.state.js";
+
+import {
+  getUserHandle,
+  addUserHandle,
+  getUsersHandleSize,
+  getUsersHandleKeys,
+  getUsersHandleEntries,
+} from "./src/store/user-handles.state.js";
+
+import {
+  getUsersValues,
+  addUserToState,
+  getUsersSize,
+  getUsersEntries,
+} from "./src/store/user.state.js";
+
+import {
+  addTag,
+  getTag,
+  getTagsSize,
+  getTagsEntries,
+} from "./src/store/tags.state.js";
+import { UserData } from "./src/models/user.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const tagsAddToDateBase = new EventEmitter();
 
 const userParserEvent = new EventEmitter();
 
@@ -30,25 +66,19 @@ let START = 0;
 let END = 0;
 
 /** @type {number} */
-let WORKERS_COUNTER = 20;
+let WORKERS_COUNTER = 50;
 
 /** @type {null | NodeJS.Timeout} */
 let INTERVAL = null;
+
+/**@type {number} */
+let TAGS_INDEX = 0;
 
 /** @type {boolean} */
 const TEST = false;
 
 /** @type {number} */
-const MAX_LENGTH = TEST ? 20 : Infinity;
-
-/** @type {Set<string>} */
-const MODELS_ID = new Set();
-
-/** @type {Set<string>} */
-const USERS_HANDLES = new Set();
-
-/** @type {Array<string>} */
-const USERS_META = [];
+const MAX_LENGTH = TEST ? 1000 : Infinity;
 
 /** @type {Array<string>} */
 const USERS_META_CACHE = [];
@@ -75,7 +105,7 @@ const runMetric = (list) => {
 /**
  * @returns {void}
  */
-const stopMetric = () => {
+function stopMetric() {
   if (INTERVAL === null) {
     return;
   }
@@ -83,17 +113,17 @@ const stopMetric = () => {
   clearInterval(INTERVAL);
 
   INTERVAL = null;
-};
+}
 
 /**
  * @param {string[]} proxyList
  * @returns {Promise<void>}
  */
-const initProxy = async (proxyList) => {
+async function initProxy(proxyList) {
   for (const proxy of proxyList) {
     const res = await proxyIs(proxy);
 
-    console.log(`${proxy}`, res);
+    console.log(res, `${proxy}`);
 
     if (res) {
       PROXY_META.push(proxy);
@@ -101,19 +131,21 @@ const initProxy = async (proxyList) => {
       PROXY_ROTTEN.push(proxy);
     }
   }
-};
+}
 
 /**
  * @param {number} page
  * @returns
  */
-const models = async (page) => {
+async function models(page) {
   const modelsResponse = await getModels(page);
 
-  if (modelsResponse) {
+  if (modelsResponse !== null) {
     for (const model of modelsResponse.creators) {
-      if (model.guid) {
-        MODELS_ID.add(model.guid);
+      if (model.guid && !getModel(model.guid)) {
+        const { guid, id } = model;
+
+        addModel(guid, { id, guid });
       }
     }
   }
@@ -127,38 +159,134 @@ const models = async (page) => {
   page++;
 
   await models(page);
-};
+}
+
+async function tags() {
+  const modelsChunk = chunkArray(getModelsValue(), PROXY_META.length);
+
+  for (const models of modelsChunk) {
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        let index = 0;
+
+        for (const { id, guid } of models) {
+          const proxy = getProxy();
+
+          getTags(id, proxy)
+            .then((tags) => {
+              if (tags === null) {
+                return;
+              }
+
+              addTag(guid, tags.data);
+            })
+            .finally(() => {
+              index++;
+
+              if (index === models.length) {
+                resolve();
+              }
+            });
+        }
+      })
+    );
+  }
+}
+
+/**
+ * @returns {void}
+ */
+function addTagsToDataBase() {
+  tagsWorker(TAGS_INDEX);
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+async function saveNewUserDataToBack() {
+  await addNewUserToDataBase(
+    `NEW_USERS_PARSER${new Date(Date.now())}`,
+    getUsersValues()
+  );
+
+  console.log("Data is saved to data base");
+}
 
 /**
  * @param {string} modalId
  * @param {string | undefined} next
+ * @returns {Promise<void>}
  */
-const users = async (modalId, next) => {
+async function users(modalId, next) {
   const usersResponse = await getUsers(modalId, next);
 
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {
       if (user.handle) {
-        USERS_HANDLES.add(user.handle);
+        const handle = user.handle;
+
+        const userHandle = getUserHandle(handle);
+
+        if (userHandle === undefined) {
+          addUserHandle(handle, [modalId]);
+        } else {
+          userHandle.push(modalId);
+        }
       }
     });
   }
 
-  if (USERS_HANDLES.size >= MAX_LENGTH) {
+  if (getUsersHandleSize() >= MAX_LENGTH) {
     return;
   }
 
   if (usersResponse?.success?.next) {
     await users(modalId, usersResponse.success.next);
   }
-};
+}
+
+/**
+ * @param {number} index
+ * @returns {void}
+ */
+function tagsWorker(index) {
+  const childProcess = spawn("node", ["tags.js", `${index}`]);
+
+  childProcess.stdout.on("data", (data) => {
+    const dataFromChild = data.toString();
+
+    console.log(dataFromChild);
+
+    if (dataFromChild === "[DATA FROM CHILD STOP SESSION]") {
+      console.log("SESSION COMPLETE");
+
+      process.exit(0);
+    }
+  });
+
+  childProcess.stderr.on("data", (data) => {
+    console.error(`[PARENT] stderr from child: ${data}`);
+
+    tagsAddToDateBase.emit("tags");
+  });
+
+  childProcess.on("close", () => {
+    tagsAddToDateBase.emit("tags");
+  });
+
+  childProcess.on("error", (err) => {
+    console.error(`[PARENT] Error spawning child process: ${err}`);
+
+    tagsAddToDateBase.emit("tags");
+  });
+}
 
 /**
  * @param {string} meta
  * @param {string} proxy
  * @returns {void}
  */
-const worker = (meta, proxy) => {
+function worker(meta, proxy) {
   const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
@@ -174,9 +302,13 @@ const worker = (meta, proxy) => {
       return;
     }
 
-    const user = dataFromChild.split("[DATA FROM CHILD]")[1];
+    /**@type {string} */
+    const userSt = dataFromChild.split("[DATA FROM CHILD]")[1];
 
-    USERS_META.push(user);
+    /**@type {User} */
+    const { userId, status, username, avatar_url } = JSON.parse(userSt);
+
+    addUserToState(meta, new UserData(userId, username, status, avatar_url));
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -194,44 +326,52 @@ const worker = (meta, proxy) => {
 
     userParserEvent.emit("parser");
   });
-};
+}
 
 /**
- * @returns {void}
+ * @returns {Promise<void>}
  */
-const finallyAction = () => {
+async function finallyAction() {
   stopMetric();
 
   END = Date.now();
 
   const info = {
-    all: USERS_HANDLES.size,
-    active: USERS_META.length,
+    all: getUsersHandleSize(),
+    active: getUsersSize(),
     time: formatMilliseconds(END - START),
   };
 
   console.dir(info);
 
+  const users = getUsersEntries().map(([key, user]) => [
+    key,
+    user.getUserData(),
+  ]);
+
   saveSync(
-    `${JSON.stringify(USERS_META)}ParsInfo:${JSON.stringify(info)}`,
+    JSON.stringify({
+      users: users,
+      length: users.length,
+    }),
     path.join(__dirname, "output/users.txt")
   );
 
   if (TEST) {
-    process.exit(0);
-  } else {
-    addUsersToDataBase("All_USERS_PARSER", USERS_META).finally(() => {
-      console.log("Data is saved to data base");
+    console.log("Parser run successfully");
 
-      process.exit(0);
-    });
+    process.exit(0);
   }
-};
+
+  await saveNewUserDataToBack();
+
+  addTagsToDataBase();
+}
 
 /**
  * @returns {string}
  */
-const getUsersMeta = () => {
+function getUsersMeta() {
   const meta = USERS_META_CACHE.shift();
 
   if (meta === undefined) {
@@ -239,12 +379,12 @@ const getUsersMeta = () => {
   }
 
   return meta;
-};
+}
 
 /**
  * @returns {string}
  */
-const getProxy = () => {
+function getProxy() {
   if (PROXY_META_CACHE.length === 0) {
     for (const proxy of PROXY_META) {
       PROXY_META_CACHE.push(proxy);
@@ -258,43 +398,72 @@ const getProxy = () => {
   }
 
   return proxy;
-};
+}
 
 /**
  * @returns {Promise<void>}
  */
-const usersPars = async () => {
+async function usersPars() {
+  START = Date.now();
+
   await initProxy(PROXY);
 
   save(
-    `proxyMeta${JSON.stringify(PROXY_META)}length:${
-      PROXY_META.length
-    }/proxyRotten${JSON.stringify(PROXY_ROTTEN)}length:${PROXY_ROTTEN.length}`,
+    JSON.stringify({
+      proxyMeta: {
+        data: PROXY_META,
+        length: PROXY_META.length,
+      },
+      proxyRotten: {
+        data: PROXY_ROTTEN,
+        length: PROXY_ROTTEN.length,
+      },
+    }),
     path.join(__dirname, "output/proxy.txt")
   );
-
-  START = Date.now();
 
   console.log("[MODELS_PARSER_START]");
 
   await models(0);
 
-  console.log("[MODELS_PARSER_END]", MODELS_ID.size);
+  console.log("[MODELS_PARSER_END]", getModelsSize());
 
-  const chunksModelsId = chunkArray(Array.from(MODELS_ID.values()), 100);
+  save(
+    JSON.stringify({
+      models: getModelEntries(),
+      length: getModelsSize(),
+    }),
+    path.join(__dirname, "output/models.txt")
+  );
+
+  console.log("[TAGS_PARSER_START]");
+
+  await tags();
+
+  console.log("[TAGS_PARSER_END]");
+
+  saveSync(
+    JSON.stringify({
+      tags: getTagsEntries(),
+      length: getTagsSize(),
+    }),
+    path.join(__dirname, "output/tags.txt")
+  );
+
+  const chunksModels = chunkArray(getModelsValue(), 100);
 
   console.log("[USERS_META_PARSER_START]");
 
-  for (const modelsId of chunksModelsId) {
+  for (const models of chunksModels) {
     await /** @type {Promise<void>} */ (
       new Promise((resolve) => {
         let index = 0;
 
-        for (const modelId of modelsId) {
-          users(modelId, undefined).finally(() => {
+        for (const model of models) {
+          users(model.guid, undefined).finally(() => {
             index++;
 
-            if (index === modelsId.length) {
+            if (index === models.length) {
               resolve();
             }
           });
@@ -306,26 +475,25 @@ const usersPars = async () => {
   END = Date.now();
 
   const handlesInfo = {
-    modals: MODELS_ID.size,
-    handles: USERS_HANDLES.size,
+    modals: getModelsSize(),
+    handles: getUsersHandleSize(),
     time: formatMilliseconds(END - START),
   };
 
   console.dir(handlesInfo);
 
   save(
-    `${JSON.stringify(
-      Array.from(USERS_HANDLES.values())
-    )}ParsInfo:${JSON.stringify(handlesInfo)}`,
+    JSON.stringify({
+      userHandle: getUsersHandleEntries(),
+      length: getUsersHandleSize(),
+    }),
     path.join(__dirname, "output/meta.txt")
   );
 
   console.log("USERS_PARSER_START");
 
-  WORKERS_COUNTER = PROXY_META.length;
-
-  for (const meta of Array.from(USERS_HANDLES.values())) {
-    USERS_META_CACHE.push(meta);
+  for (const handle of getUsersHandleKeys()) {
+    USERS_META_CACHE.push(handle);
   }
 
   for (let i = 0; i < WORKERS_COUNTER; i++) {
@@ -337,7 +505,13 @@ const usersPars = async () => {
   }
 
   runMetric(USERS_META_CACHE);
-};
+}
+
+tagsAddToDateBase.on("tags", () => {
+  TAGS_INDEX++;
+
+  tagsWorker(TAGS_INDEX);
+});
 
 userParserEvent.on("parser", () => {
   if (USERS_META_CACHE.length === 0) {

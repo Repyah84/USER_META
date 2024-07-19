@@ -8,26 +8,20 @@ import { API } from "../const/api.js";
 import { request } from "../modules/request.js";
 
 /**
- * @typedef {{
- *      listId: string,
- *      userIds: string[]
- * }} RequestData
- * @param {RequestData} body
  * @param {string} accessToken
  * @param {string} refreshToken
- * @returns {Promise<boolean | null>}
+ * @returns {Promise<Array<string> | null>}
  */
-export const addUsersToList = async (body, accessToken, refreshToken) => {
+export const getAllUserId = async (accessToken, refreshToken) => {
   try {
     const response = await request(
       (accessToken) =>
-        fetch(`${API}/add_users_to_list`, {
-          method: "POST",
+        fetch(`${API}/get_all_user_ids`, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify(body),
         }),
       accessToken,
       refreshToken
@@ -37,7 +31,7 @@ export const addUsersToList = async (body, accessToken, refreshToken) => {
       return null;
     }
 
-    return await /** @type {Promise<boolean>} */ (response.json());
+    return await /** @type {Promise<Array<string>>} */ (response.json());
   } catch (error) {
     console.log(error);
 

@@ -3,18 +3,13 @@
 
 "use strict";
 
+import { getUserMeta } from "./get-user-model.js";
+
 /**
  * @param {string []}usersMeta
  * @returns {User[]}
  */
 export const getUsersModel = (usersMeta) =>
   usersMeta.map((meta) => {
-    const splitMeta = meta.split("/");
-
-    return {
-      avatar_url: "",
-      status: "custom",
-      userId: splitMeta[splitMeta.length - 1],
-      username: splitMeta[splitMeta.length - 2],
-    };
+    return getUserMeta(meta);
   });

@@ -1,4 +1,5 @@
 // @ts-check
+/// <reference path="../types/model.type.js" />
 
 "use strict";
 
@@ -8,7 +9,7 @@ import { SIZE } from "../const/size.js";
 
 /**
  * @typedef {{
- *      creators: { guid: string }[],
+ *      creators: Model[],
  *      currentPage: number
  *      totalPages: number
  * }} ResponseData

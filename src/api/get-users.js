@@ -2,6 +2,7 @@
 
 "use strict";
 
+import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch, { AbortError } from "node-fetch";
 
 /**

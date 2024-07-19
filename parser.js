@@ -4,6 +4,7 @@
 
 import { getUser } from "./src/api/get-user.js";
 import { findUserMeta } from "./src/utils/find-user-meta.js";
+import { getUserMeta } from "./src/utils/get-user-model.js";
 
 setTimeout(async () => {
   try {
@@ -21,7 +22,9 @@ setTimeout(async () => {
       return;
     }
 
-    process.stdout.write(`[DATA FROM CHILD]${meta}`);
+    const user = getUserMeta(meta);
+
+    process.stdout.write(`[DATA FROM CHILD]${JSON.stringify(user)}`);
   } catch (error) {
     console.log(`[ERROR FROM CHILD]${error}`);
   } finally {
