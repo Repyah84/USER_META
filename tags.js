@@ -74,7 +74,7 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
       addUserToState(key, new UserData(userId, username, status, avatar_url));
     }
 
-    const usersChunks = chunkArray(getUsersEntries(), 10000);
+    const usersChunks = chunkArray(getUsersEntries(), 5000);
 
     console.log("LENGTH", usersChunks.length);
 
