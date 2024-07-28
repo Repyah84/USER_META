@@ -11,6 +11,7 @@ import { addUsersToList } from "../api/add-users-to-list.js";
 import { chunkArray } from "../utils/split-to-chunks.js";
 import { getAllUserId } from "../api/get-all-users-id.js";
 import { UserData } from "../models/user.model.js";
+import { NAME, PASSWORD } from "../const/auth.js";
 
 /**
  * @param {string}listName
@@ -24,7 +25,7 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   /** @type {Array<User>} */
   const newUsers = [];
 
-  const auth = await login({ password: "ghqosx01293", username: "admin" });
+  const auth = await login({ password: PASSWORD, username: NAME });
 
   if (auth === null) {
     return;

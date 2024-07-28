@@ -9,6 +9,7 @@ import { addUsersToList } from "../api/add-users-to-list.js";
 
 import { getUsersModel } from "../utils/get-users-model.js";
 import { chunkArray } from "../utils/split-to-chunks.js";
+import { NAME, PASSWORD } from "../const/auth.js";
 
 /**
  * @param {string}listName
@@ -16,7 +17,7 @@ import { chunkArray } from "../utils/split-to-chunks.js";
  * @returns {Promise<void>}
  */
 export const addUsersToDataBase = async (listName, users) => {
-  const auth = await login({ password: "admin", username: "admin" });
+  const auth = await login({ password: PASSWORD, username: NAME });
 
   if (auth === null) {
     return;

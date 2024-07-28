@@ -5,6 +5,7 @@
 
 import { addTags } from "../api/add-tags.js";
 import { login } from "../api/login.js";
+import { NAME, PASSWORD } from "../const/auth.js";
 import { UserData } from "../models/user.model.js";
 
 /**
@@ -19,7 +20,7 @@ export const addTagsToDataBase = async (users) => {
   }));
 
   try {
-    const auth = await login({ password: "admin", username: "admin" });
+    const auth = await login({ password: PASSWORD, username: NAME });
 
     if (auth === null) {
       return null;
