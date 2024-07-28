@@ -21,6 +21,10 @@ export const login = async (body) => {
       body: JSON.stringify(body),
     });
 
+    if (!response.ok) {
+      return null;
+    }
+
     return await /** @type {Promise<AuthResponse>} */ (response.json());
   } catch (error) {
     console.log(error);
