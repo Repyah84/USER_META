@@ -50,9 +50,9 @@ export const addNewUserToDataBase = async (listName, usersData) => {
     }
   }
 
-  if (newUsers.length === 0) {
-    console.log("new users list empty");
+  console.log("newUsers.length", newUsers.length);
 
+  if (newUsers.length === 0) {
     return;
   }
 
