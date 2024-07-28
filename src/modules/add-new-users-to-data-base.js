@@ -69,8 +69,6 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   const usersModelList = chunkArray(newUsers, 10000);
 
   for (const usersModel of usersModelList) {
-    console.log("usersModel", usersModel.length);
-
     const userIds = usersModel.map(({ userId }) => userId);
 
     await /** @type {Promise<void>} */ (
