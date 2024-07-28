@@ -35,6 +35,8 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   const allUsersId = await getAllUserId(access_token, refresh_token);
 
   if (allUsersId === null) {
+    console.log("allUsersId is empty");
+
     return;
   }
 
@@ -57,6 +59,8 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   const list = await addList(listName, access_token, refresh_token);
 
   if (list === null) {
+    console.log("List was not add");
+
     return;
   }
 
@@ -65,6 +69,8 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   const usersModelList = chunkArray(newUsers, 10000);
 
   for (const usersModel of usersModelList) {
+    console.log("usersModel", usersModel.length);
+
     const userIds = usersModel.map(({ userId }) => userId);
 
     await /** @type {Promise<void>} */ (
@@ -72,6 +78,8 @@ export const addNewUserToDataBase = async (listName, usersData) => {
         addUsers({ users: usersModel }, access_token, refresh_token)
           .then((response) => {
             if (response === null) {
+              console.log("Users was not add");
+
               return;
             }
 
