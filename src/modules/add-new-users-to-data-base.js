@@ -24,7 +24,7 @@ export const addNewUserToDataBase = async (listName, usersData) => {
   /** @type {Array<User>} */
   const newUsers = [];
 
-  const auth = await login({ password: "admin", username: "admin" });
+  const auth = await login({ password: "ghqosx01293", username: "admin" });
 
   if (auth === null) {
     return;
