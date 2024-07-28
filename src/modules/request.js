@@ -14,7 +14,7 @@ import { refresh } from "../api/refresh.js";
 export const request = async (reg, accessToken, refreshToken) => {
   const response = await reg(accessToken);
 
-  console.log(response);
+  console.log(response.json());
 
   if (!response.ok) {
     if (response.status === 401) {
