@@ -44,12 +44,7 @@ import {
   getUsersEntries,
 } from "./src/store/user.state.js";
 
-import {
-  addTag,
-  getTag,
-  getTagsSize,
-  getTagsEntries,
-} from "./src/store/tags.state.js";
+import { addTag, getTagsSize, getTagsEntries } from "./src/store/tags.state.js";
 import { UserData } from "./src/models/user.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
