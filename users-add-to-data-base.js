@@ -9,7 +9,7 @@ import { readFile } from "./src/modules/read.js";
 
 (async () => {
   try {
-    const usersDataFromFile = await readFile("./output/users.txt");
+    const usersDataFromFile = await readFile("./output/users.json");
 
     if (usersDataFromFile === null) {
       return;
@@ -19,8 +19,8 @@ import { readFile } from "./src/modules/read.js";
     const usersData = JSON.parse(usersDataFromFile);
 
     const users = usersData.users.map(
-      ([_key, { avatar_url, status, userId, username }]) =>
-        new UserData(userId, username, status, avatar_url)
+      ([_key, { avatar_url, status, userId, username, mv_member }]) =>
+        new UserData(userId, username, status, avatar_url, mv_member)
     );
 
     await addNewUserToDataBase(

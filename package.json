@@ -17,6 +17,7 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@types/node-fetch": "^2.6.11"
+    "@types/node-fetch": "^2.6.11",
+    "cypress": "^13.13.2"
   }
 }

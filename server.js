@@ -1,5 +1,4 @@
 // @ts-check
-/// <reference path="./src/types/parser-dto.type.js" />
 /// <reference path="./src/types/user.type.js" />
 
 "use strict";
@@ -46,6 +45,7 @@ import {
 
 import { addTag, getTagsSize, getTagsEntries } from "./src/store/tags.state.js";
 import { UserData } from "./src/models/user.model.js";
+import { getAuthCookies } from "./src/modules/get-auth-cookies.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -301,9 +301,13 @@ function worker(meta, proxy) {
     const userSt = dataFromChild.split("[DATA FROM CHILD]")[1];
 
     /**@type {User} */
-    const { userId, status, username, avatar_url } = JSON.parse(userSt);
+    const { userId, status, username, avatar_url, mv_member } =
+      JSON.parse(userSt);
 
-    addUserToState(meta, new UserData(userId, username, status, avatar_url));
+    addUserToState(
+      meta,
+      new UserData(userId, username, status, avatar_url, mv_member)
+    );
   });
 
   childProcess.stderr.on("data", (data) => {
@@ -345,11 +349,15 @@ async function finallyAction() {
   ]);
 
   saveSync(
-    JSON.stringify({
-      users: users,
-      length: users.length,
-    }),
-    path.join(__dirname, "output/users.txt")
+    JSON.stringify(
+      {
+        users: users,
+        length: users.length,
+      },
+      null,
+      2
+    ),
+    path.join(__dirname, "output/users.json")
   );
 
   if (TEST) {
@@ -404,17 +412,21 @@ async function usersPars() {
   await initProxy(PROXY);
 
   save(
-    JSON.stringify({
-      proxyMeta: {
-        data: PROXY_META,
-        length: PROXY_META.length,
+    JSON.stringify(
+      {
+        proxyMeta: {
+          data: PROXY_META,
+          length: PROXY_META.length,
+        },
+        proxyRotten: {
+          data: PROXY_ROTTEN,
+          length: PROXY_ROTTEN.length,
+        },
       },
-      proxyRotten: {
-        data: PROXY_ROTTEN,
-        length: PROXY_ROTTEN.length,
-      },
-    }),
-    path.join(__dirname, "output/proxy.txt")
+      null,
+      2
+    ),
+    path.join(__dirname, "output/proxy.json")
   );
 
   console.log("[MODELS_PARSER_START]");
@@ -424,11 +436,15 @@ async function usersPars() {
   console.log("[MODELS_PARSER_END]", getModelsSize());
 
   save(
-    JSON.stringify({
-      models: getModelEntries(),
-      length: getModelsSize(),
-    }),
-    path.join(__dirname, "output/models.txt")
+    JSON.stringify(
+      {
+        models: getModelEntries(),
+        length: getModelsSize(),
+      },
+      null,
+      2
+    ),
+    path.join(__dirname, "output/models.json")
   );
 
   console.log("[TAGS_PARSER_START]");
@@ -438,11 +454,15 @@ async function usersPars() {
   console.log("[TAGS_PARSER_END]");
 
   saveSync(
-    JSON.stringify({
-      tags: getTagsEntries(),
-      length: getTagsSize(),
-    }),
-    path.join(__dirname, "output/tags.txt")
+    JSON.stringify(
+      {
+        tags: getTagsEntries(),
+        length: getTagsSize(),
+      },
+      null,
+      2
+    ),
+    path.join(__dirname, "output/tags.json")
   );
 
   const chunksModels = chunkArray(getModelsValue(), 100);
@@ -478,14 +498,20 @@ async function usersPars() {
   console.dir(handlesInfo);
 
   save(
-    JSON.stringify({
-      userHandle: getUsersHandleEntries(),
-      length: getUsersHandleSize(),
-    }),
-    path.join(__dirname, "output/meta.txt")
+    JSON.stringify(
+      {
+        userHandle: getUsersHandleEntries(),
+        length: getUsersHandleSize(),
+      },
+      null,
+      2
+    ),
+    path.join(__dirname, "output/meta.json")
   );
 
   console.log("USERS_PARSER_START");
+
+  await getAuthCookies();
 
   for (const handle of getUsersHandleKeys()) {
     USERS_META_CACHE.push(handle);

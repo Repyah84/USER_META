@@ -16,5 +16,6 @@ export const getUserMeta = (meta) => {
     status: "custom",
     userId: splitMeta[splitMeta.length - 1],
     username: splitMeta[splitMeta.length - 2],
+    mv_member: "",
   };
 };
