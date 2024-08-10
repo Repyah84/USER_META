@@ -70,7 +70,7 @@ let INTERVAL = null;
 let TAGS_INDEX = 0;
 
 /** @type {boolean} */
-const TEST = false;
+const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 1000 : Infinity;
@@ -100,7 +100,7 @@ const runMetric = (list) => {
 /**
  * @returns {void}
  */
-function stopMetric() {
+const stopMetric = () => {
   if (INTERVAL === null) {
     return;
   }
@@ -108,13 +108,13 @@ function stopMetric() {
   clearInterval(INTERVAL);
 
   INTERVAL = null;
-}
+};
 
 /**
  * @param {string[]} proxyList
  * @returns {Promise<void>}
  */
-async function initProxy(proxyList) {
+const initProxy = async (proxyList) => {
   for (const proxy of proxyList) {
     const res = await proxyIs(proxy);
 
@@ -126,13 +126,13 @@ async function initProxy(proxyList) {
       PROXY_ROTTEN.push(proxy);
     }
   }
-}
+};
 
 /**
  * @param {number} page
- * @returns
+ * @returns {Promise<void>}
  */
-async function models(page) {
+const models = async (page) => {
   const modelsResponse = await getModels(page);
 
   if (modelsResponse !== null) {
@@ -154,9 +154,12 @@ async function models(page) {
   page++;
 
   await models(page);
-}
+};
 
-async function tags() {
+/**
+ * @returns {Promise<void>}
+ */
+const tags = async () => {
   const modelsChunk = chunkArray(getModelsValue(), PROXY_META.length);
 
   for (const models of modelsChunk) {
@@ -186,33 +189,33 @@ async function tags() {
       })
     );
   }
-}
+};
 
 /**
  * @returns {void}
  */
-function addTagsToDataBase() {
+const addTagsToDataBase = () => {
   tagsWorker(TAGS_INDEX);
-}
+};
 
 /**
  * @returns {Promise<void>}
  */
-async function saveNewUserDataToBack() {
+const saveNewUserDataToBack = async () => {
   await addNewUserToDataBase(
     `NEW_USERS_PARSER${new Date(Date.now())}`,
     getUsersValues()
   );
 
   console.log("Data is saved to data base");
-}
+};
 
 /**
  * @param {string} modalId
  * @param {string | undefined} next
  * @returns {Promise<void>}
  */
-async function users(modalId, next) {
+const users = async (modalId, next) => {
   const usersResponse = await getUsers(modalId, next);
 
   if (usersResponse?.success?.users) {
@@ -238,13 +241,13 @@ async function users(modalId, next) {
   if (usersResponse?.success?.next) {
     await users(modalId, usersResponse.success.next);
   }
-}
+};
 
 /**
  * @param {number} index
  * @returns {void}
  */
-function tagsWorker(index) {
+const tagsWorker = (index) => {
   const childProcess = spawn("node", ["tags.js", `${index}`]);
 
   childProcess.stdout.on("data", (data) => {
@@ -274,14 +277,14 @@ function tagsWorker(index) {
 
     tagsAddToDateBase.emit("tags");
   });
-}
+};
 
 /**
  * @param {string} meta
  * @param {string} proxy
  * @returns {void}
  */
-function worker(meta, proxy) {
+const worker = (meta, proxy) => {
   const childProcess = spawn("node", ["parser.js", `${meta}`, `${proxy}`]);
 
   childProcess.stdout.on("data", (data) => {
@@ -325,12 +328,12 @@ function worker(meta, proxy) {
 
     userParserEvent.emit("parser");
   });
-}
+};
 
 /**
  * @returns {Promise<void>}
  */
-async function finallyAction() {
+const finallyAction = async () => {
   stopMetric();
 
   END = Date.now();
@@ -369,12 +372,12 @@ async function finallyAction() {
   await saveNewUserDataToBack();
 
   addTagsToDataBase();
-}
+};
 
 /**
  * @returns {string}
  */
-function getUsersMeta() {
+const getUsersMeta = () => {
   const meta = USERS_META_CACHE.shift();
 
   if (meta === undefined) {
@@ -382,12 +385,12 @@ function getUsersMeta() {
   }
 
   return meta;
-}
+};
 
 /**
  * @returns {string}
  */
-function getProxy() {
+const getProxy = () => {
   if (PROXY_META_CACHE.length === 0) {
     for (const proxy of PROXY_META) {
       PROXY_META_CACHE.push(proxy);
@@ -401,12 +404,12 @@ function getProxy() {
   }
 
   return proxy;
-}
+};
 
 /**
  * @returns {Promise<void>}
  */
-async function usersPars() {
+const usersPars = async () => {
   START = Date.now();
 
   await initProxy(PROXY);
@@ -526,7 +529,7 @@ async function usersPars() {
   }
 
   runMetric(USERS_META_CACHE);
-}
+};
 
 tagsAddToDateBase.on("tags", () => {
   TAGS_INDEX++;
