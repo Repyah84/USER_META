@@ -14,7 +14,7 @@ export class UserData {
   status;
   /** @type {string} */
   avatar_url;
-  /** @type {string} */
+  /** @type {number} */
   mv_member;
 
   /**
@@ -22,7 +22,7 @@ export class UserData {
    * @param {string} username
    * @param {string} status
    * @param {string} avatar_url
-   * @param {string} mv_member
+   * @param {number} mv_member
    */
   constructor(userId, username, status, avatar_url, mv_member) {
     this.tags = new Set();

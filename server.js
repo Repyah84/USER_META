@@ -46,6 +46,7 @@ import {
 import { addTag, getTagsSize, getTagsEntries } from "./src/store/tags.state.js";
 import { UserData } from "./src/models/user.model.js";
 import { getAuthCookies } from "./src/modules/get-auth-cookies.js";
+import { addUsersToDataBase } from "./src/modules/add-mv-members-to-data-base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -203,11 +204,24 @@ const addTagsToDataBase = () => {
  */
 const saveNewUserDataToBack = async () => {
   await addNewUserToDataBase(
-    `NEW_USERS_PARSER${new Date(Date.now())}`,
+    `NEW_USERS_PARSER:${new Date(Date.now()).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })}`,
     getUsersValues()
   );
 
   console.log("Data is saved to data base");
+};
+
+/**
+ * @returns {Promise<void>}
+ */
+const saveMvMembersDataToBack = async () => {
+  await addUsersToDataBase(getUsersValues());
+
+  console.log("Mv Members is saved to data base");
 };
 
 /**
@@ -370,6 +384,8 @@ const finallyAction = async () => {
   }
 
   await saveNewUserDataToBack();
+
+  await saveMvMembersDataToBack();
 
   addTagsToDataBase();
 };

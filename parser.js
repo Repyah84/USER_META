@@ -6,6 +6,7 @@
 import { getPurchases } from "./src/api/get-purchases.js";
 import { getUser } from "./src/api/get-user.js";
 import { getMvMember } from "./src/modules/get-mv-member.js";
+import { getStatsFromMvMember } from "./src/modules/get-number-from-mv-member.js";
 import { readFile } from "./src/modules/read.js";
 import { findUserMeta } from "./src/utils/find-user-meta.js";
 import { formatCookies } from "./src/utils/format-cookies.js";
@@ -40,11 +41,9 @@ setTimeout(async () => {
       proxy
     );
 
-    if (purchases === null) {
-      return;
-    }
-
-    const mv_member = getMvMember(serializeString(purchases)) || "";
+    const mv_member = getStatsFromMvMember(
+      purchases === null ? "-" : getMvMember(serializeString(purchases)) || "-"
+    );
 
     process.stdout.write(
       `[DATA FROM CHILD]${JSON.stringify({ ...user, mv_member })}`

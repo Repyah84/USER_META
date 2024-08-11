@@ -4,5 +4,5 @@
  * @property {string} username
  * @property {string} avatar_url
  * @property {string} status
- * @property {string} mv_member
+ * @property {number} mv_member
  */
