@@ -71,7 +71,7 @@ let INTERVAL = null;
 let TAGS_INDEX = 0;
 
 /** @type {boolean} */
-const TEST = false;
+const TEST = true;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 1000 : Infinity;
@@ -366,15 +366,11 @@ const finallyAction = async () => {
   ]);
 
   saveSync(
-    JSON.stringify(
-      {
-        users: users,
-        length: users.length,
-      },
-      null,
-      2
-    ),
-    path.join(__dirname, "output/users.json")
+    JSON.stringify({
+      users: users,
+      length: users.length,
+    }),
+    path.join(__dirname, "output/users.txt")
   );
 
   if (TEST) {
@@ -445,7 +441,7 @@ const usersPars = async () => {
       null,
       2
     ),
-    path.join(__dirname, "output/proxy.json")
+    path.join(__dirname, "output/proxy.txt")
   );
 
   console.log("[MODELS_PARSER_START]");
@@ -455,15 +451,11 @@ const usersPars = async () => {
   console.log("[MODELS_PARSER_END]", getModelsSize());
 
   save(
-    JSON.stringify(
-      {
-        models: getModelEntries(),
-        length: getModelsSize(),
-      },
-      null,
-      2
-    ),
-    path.join(__dirname, "output/models.json")
+    JSON.stringify({
+      models: getModelEntries(),
+      length: getModelsSize(),
+    }),
+    path.join(__dirname, "output/models.txt")
   );
 
   console.log("[TAGS_PARSER_START]");
@@ -473,15 +465,11 @@ const usersPars = async () => {
   console.log("[TAGS_PARSER_END]");
 
   saveSync(
-    JSON.stringify(
-      {
-        tags: getTagsEntries(),
-        length: getTagsSize(),
-      },
-      null,
-      2
-    ),
-    path.join(__dirname, "output/tags.json")
+    JSON.stringify({
+      tags: getTagsEntries(),
+      length: getTagsSize(),
+    }),
+    path.join(__dirname, "output/tags.txt")
   );
 
   const chunksModels = chunkArray(getModelsValue(), 100);
@@ -517,15 +505,11 @@ const usersPars = async () => {
   console.dir(handlesInfo);
 
   save(
-    JSON.stringify(
-      {
-        userHandle: getUsersHandleEntries(),
-        length: getUsersHandleSize(),
-      },
-      null,
-      2
-    ),
-    path.join(__dirname, "output/meta.json")
+    JSON.stringify({
+      userHandle: getUsersHandleEntries(),
+      length: getUsersHandleSize(),
+    }),
+    path.join(__dirname, "output/meta.txt")
   );
 
   console.log("USERS_PARSER_START");

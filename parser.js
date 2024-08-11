@@ -25,7 +25,7 @@ setTimeout(async () => {
 
     const meta = findUserMeta(userMetaResponse);
 
-    const cookies = await readFile("./output/cookies.json");
+    const cookies = await readFile("./output/cookies.txt");
 
     if (meta === null || cookies === null) {
       return;

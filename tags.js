@@ -32,10 +32,10 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
 
     console.log("USERS_SIZE", getUsersSize(), "INDEX", index);
 
-    const modelsDataFromFile = await readFile("./output/models.json");
-    const usersMetaDataFromFile = await readFile("./output/meta.json");
-    const tagsDataFromFile = await readFile("./output/tags.json");
-    const usersDataFromFile = await readFile("./output/users.json");
+    const modelsDataFromFile = await readFile("./output/models.txt");
+    const usersMetaDataFromFile = await readFile("./output/meta.txt");
+    const tagsDataFromFile = await readFile("./output/tags.txt");
+    const usersDataFromFile = await readFile("./output/users.txt");
 
     if (
       modelsDataFromFile === null ||

@@ -9,7 +9,7 @@ import { readFile } from "./src/modules/read.js";
 
 (async () => {
   try {
-    const usersDataFromFile = await readFile("./output/users.json");
+    const usersDataFromFile = await readFile("./output/users.txt");
 
     if (usersDataFromFile === null) {
       return;

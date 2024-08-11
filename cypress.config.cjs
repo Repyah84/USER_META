@@ -10,7 +10,7 @@ module.exports = {
     setupNodeEvents(on, _config) {
       on("task", {
         saveCookies(cookies) {
-          const filePath = path.join(__dirname, "output/cookies.json");
+          const filePath = path.join(__dirname, "output/cookies.txt");
 
           fs.writeFileSync(filePath, JSON.stringify(cookies, null, 2));
 
