@@ -71,7 +71,7 @@ let INTERVAL = null;
 let TAGS_INDEX = 0;
 
 /** @type {boolean} */
-const TEST = true;
+const TEST = false;
 
 /** @type {number} */
 const MAX_LENGTH = TEST ? 1000 : Infinity;
