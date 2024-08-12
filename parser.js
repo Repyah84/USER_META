@@ -46,7 +46,10 @@ setTimeout(async () => {
     );
 
     process.stdout.write(
-      `[DATA FROM CHILD]${JSON.stringify({ ...user, mv_member })}`
+      `[DATA FROM CHILD]${JSON.stringify({
+        ...user,
+        mv_member: mv_member || 0,
+      })}`
     );
   } catch (error) {
     console.log(`[ERROR FROM CHILD]${error}`);
