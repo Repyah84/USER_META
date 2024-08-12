@@ -2,11 +2,11 @@
 
 "use strict";
 
-import { readFile } from "./src/modules/read";
+import { readFile } from "./src/modules/read.js";
 
-import { addMvMembers } from "./src/api/add-mv-members";
+import { addMvMembers } from "./src/api/add-mv-members.js";
 import { PASSWORD, NAME } from "./src/const/auth.js";
-import { chunkArray } from "./src/utils/split-to-chunks";
+import { chunkArray } from "./src/utils/split-to-chunks.js";
 import { login } from "./src/api/login.js";
 
 /**
