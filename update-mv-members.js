@@ -56,6 +56,14 @@ export const addUsersToDataBase = async (users) => {
   /**@type {User[]} */
   const users = userData.users.map(([_key, user]) => user);
 
+  users.forEach((user) => {
+    if (typeof user.mv_member !== "number") {
+      console.log(user);
+
+      user.mv_member = 0;
+    }
+  });
+
   await addUsersToDataBase(users);
 
   console.log("mv_members add success");
