@@ -1,5 +1,5 @@
 const NAME = "admin";
-const PASSWORD = "ghqosx01293";
+const PASSWORD = "nwh377vpw";
 
 const MODEL_NAME = "FoxyPennye";
 const MODEL_PASSWORD = "sHL8Yih9YuLSMk*";
