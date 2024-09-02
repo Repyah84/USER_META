@@ -4,6 +4,6 @@
 /output
 
 # Files
-/cypress/*
+/cypress/**
 
 /cypress/!index.spec.js:
