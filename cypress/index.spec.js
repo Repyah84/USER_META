@@ -1,7 +1,7 @@
 // @ts-check
 /// <reference types="cypress" />
 
-import { MODEL_NAME, MODEL_PASSWORD } from "../src/const/auth";
+import { MODEL_NAME, MODEL_PASSWORD } from "../src/const/auth.js";
 
 describe("Login and check cookies", () => {
   beforeEach(() => {
