@@ -2,6 +2,6 @@
 /node_modules
 /input
 /output
+/cypress/*
 
 # Files
-/cypress/screenshots
