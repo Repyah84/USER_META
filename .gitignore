@@ -2,7 +2,8 @@
 /node_modules
 /input
 /output
-/cypress/*
 
 # Files
-/cypress/screenshots
+/cypress/*
+
+/cypress/!index.spec.js:
