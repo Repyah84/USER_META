@@ -21,13 +21,17 @@ describe("Login and check cookies", () => {
 
     cy.get('input[name="userName"]').focus().type(MODEL_NAME);
 
+    cy.wait(20000);
+
     cy.get('input[name="password"]').focus().type(MODEL_PASSWORD);
+
+    cy.wait(30000);
 
     cy.get('button[type="submit"]').focus().click();
 
-    cy.url().should("not.include", "Login");
-
     cy.wait("@loginRequest");
+
+    cy.url().should("not.include", "Login");
 
     cy.getCookies().then((cookies) => {
       cy.task("saveCookies", cookies);
