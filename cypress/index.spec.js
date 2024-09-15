@@ -3,6 +3,8 @@
 
 import { MODEL_NAME, MODEL_PASSWORD } from "../src/const/auth.js";
 
+const randomDelay = Math.floor(Math.random() * (60000 - 20000 + 1)) + 10000;
+
 describe("Login and check cookies", () => {
   beforeEach(() => {
     cy.on("uncaught:exception", (err, runnable) => {
@@ -21,11 +23,11 @@ describe("Login and check cookies", () => {
 
     cy.get('input[name="userName"]').focus().type(MODEL_NAME);
 
-    cy.wait(20000);
+    cy.wait(randomDelay);
 
     cy.get('input[name="password"]').focus().type(MODEL_PASSWORD);
 
-    cy.wait(30000);
+    cy.wait(randomDelay);
 
     cy.get('button[type="submit"]').focus().click();
 

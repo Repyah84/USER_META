@@ -45,7 +45,7 @@ import {
 
 import { addTag, getTagsSize, getTagsEntries } from "./src/store/tags.state.js";
 import { UserData } from "./src/models/user.model.js";
-// import { getAuthCookies } from "./src/modules/get-auth-cookies.js";
+import { getAuthCookies } from "./src/modules/get-auth-cookies.js";
 import { addUsersToDataBase } from "./src/modules/add-mv-members-to-data-base.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -514,7 +514,7 @@ const usersPars = async () => {
 
   console.log("USERS_PARSER_START");
 
-  // await getAuthCookies();
+  await getAuthCookies();
 
   for (const handle of getUsersHandleKeys()) {
     USERS_META_CACHE.push(handle);

@@ -11,8 +11,6 @@ export const getAuthCookies = async () => {
   try {
     await cypress.run({
       spec: "cypress/index.spec.js",
-      // browser: "edge",
-      // headed: true,
       headless: true,
     });
   } catch (error) {
