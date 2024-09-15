@@ -514,7 +514,7 @@ const usersPars = async () => {
 
   console.log("USERS_PARSER_START");
 
-  await getAuthCookies();
+  // await getAuthCookies();
 
   for (const handle of getUsersHandleKeys()) {
     USERS_META_CACHE.push(handle);
