@@ -134,7 +134,9 @@ const initProxy = async (proxyList) => {
  * @returns {Promise<void>}
  */
 const models = async (page) => {
-  const modelsResponse = await getModels(page);
+  const proxy = getProxy();
+
+  const modelsResponse = await getModels(page, proxy);
 
   if (modelsResponse !== null) {
     for (const model of modelsResponse.creators) {
@@ -230,7 +232,9 @@ const saveMvMembersDataToBack = async () => {
  * @returns {Promise<void>}
  */
 const users = async (modalId, next) => {
-  const usersResponse = await getUsers(modalId, next);
+  const proxy = getProxy();
+
+  const usersResponse = await getUsers(modalId, next, proxy);
 
   if (usersResponse?.success?.users) {
     usersResponse.success.users.forEach((user) => {

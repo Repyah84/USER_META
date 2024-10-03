@@ -14,9 +14,12 @@ import fetch, { AbortError } from "node-fetch";
  * }} ResponseData
  * @param {string | undefined} next
  * @param {string} modalId
+ * @param {string} proxy
  * @returns {Promise< ResponseData| null> }
  */
-export const getUsers = async (modalId, next) => {
+export const getUsers = async (modalId, next, proxy) => {
+  const agent = new HttpsProxyAgent(`http://${proxy}`);
+
   const AbortController = globalThis.AbortController;
 
   const controller = new AbortController();
@@ -52,6 +55,7 @@ export const getUsers = async (modalId, next) => {
         body: null,
         method: "GET",
         signal: controller.signal,
+        agent,
       }
     );
 
