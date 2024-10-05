@@ -109,6 +109,8 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
       users.map(([_key, userData]) => userData)
     );
 
+    console.log("addTagsToDataBase", response);
+
     if (response === null) {
       console.log("Tags not add to data base");
     } else {
