@@ -105,9 +105,13 @@ import { addTagsToDataBase } from "./src/modules/add-tags-to-data-base.js";
       }
     }
 
+    console.log(users.map(([_key, userData]) => userData)[0]);
+
     const response = await addTagsToDataBase(
       users.map(([_key, userData]) => userData)
     );
+
+    console.log("addTagsToDataBase", response);
 
     if (response === null) {
       console.log("Tags not add to data base");
